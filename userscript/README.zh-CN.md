@@ -6,7 +6,7 @@
 
 > **版本号说明**：油猴脚本走独立的 SemVer 节奏，与 Chrome 扩展版本号已解耦。完整的脚本端发布历史见 [`../CHANGELOG.md`](../CHANGELOG.md)。
 
-📖 **[官方网站](https://open-in-new-tab.vercel.app/)** | 🎯 **[从 Greasy Fork 安装](https://greasyfork.org/zh-CN/scripts/551033-open-in-new-tab)** | 🌟 **[GitHub 仓库](https://github.com/shiroxw/OpenInNewTab)**
+📖 **[官方网站](https://open-in-new-tab.vercel.app/)** | 🎯 **[从 Greasy Fork 安装](https://greasyfork.org/zh-CN/scripts/551033-open-in-new-tab)** | 🌟 **[GitHub 仓库](https://github.com/shiroixw/OpenInNewTab)**
 
 ## 功能特性
 
