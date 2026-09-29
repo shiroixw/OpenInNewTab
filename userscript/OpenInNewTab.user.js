@@ -2,7 +2,7 @@
 // @name              Open In New Tab
 // @name:zh-CN        Open In New Tab - 链接强制新标签页打开
 // @name:zh-TW        Open In New Tab - 連結強制新分頁開啟
-// @namespace         https://github.com/shiroxw/OpenInNewTab
+// @namespace         https://github.com/shiroixw/OpenInNewTab
 // @version           1.7.1
 // @description       Force links to open in a new tab on whitelisted sites only. One-click add or remove the current domain from the Tampermonkey menu, with subdomain matching, dynamic-content support, dark mode, and English / 简体中文 / 繁體中文 UI. Other sites stay untouched.
 // @description:zh-CN 基于白名单的链接拦截脚本：仅在你勾选的网站把链接强制改为新标签页打开，其它网站完全不受影响。油猴菜单一键加入/移出当前域名，支持子域名匹配、深色模式与中英文界面。
@@ -10,11 +10,11 @@
 // @author            Xiaowu
 // @match             *://*/*
 // @noframes
-// @homepageURL       https://github.com/shiroxw/OpenInNewTab
-// @supportURL        https://github.com/shiroxw/OpenInNewTab/issues
-// @icon              https://raw.githubusercontent.com/shiroxw/OpenInNewTab/main/extension/icons/icon128.png
-// @updateURL         https://raw.githubusercontent.com/shiroxw/OpenInNewTab/main/userscript/OpenInNewTab.user.js
-// @downloadURL       https://raw.githubusercontent.com/shiroxw/OpenInNewTab/main/userscript/OpenInNewTab.user.js
+// @homepageURL       https://github.com/shiroixw/OpenInNewTab
+// @supportURL        https://github.com/shiroixw/OpenInNewTab/issues
+// @icon              https://raw.githubusercontent.com/shiroixw/OpenInNewTab/main/extension/icons/icon128.png
+// @updateURL         https://raw.githubusercontent.com/shiroixw/OpenInNewTab/main/userscript/OpenInNewTab.user.js
+// @downloadURL       https://raw.githubusercontent.com/shiroixw/OpenInNewTab/main/userscript/OpenInNewTab.user.js
 // @license           MIT
 // @grant             GM_setValue
 // @grant             GM_getValue
@@ -52,7 +52,7 @@
     })
 
     const SCRIPT_VERSION = "1.7.1"
-    const PROJECT_HOME = "https://github.com/shiroxw/OpenInNewTab"
+    const PROJECT_HOME = "https://github.com/shiroixw/OpenInNewTab"
     const GREASY_FORK_SCRIPT_PATH = "scripts/551033-open-in-new-tab"
     // Official landing page (vercel.json → outputDirectory: "website").
     // Query string is a soft signal for future analytics; the page itself
