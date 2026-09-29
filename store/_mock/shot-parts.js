@@ -340,7 +340,7 @@
 		const s = EXT[lang];
 		const rows = [
 			{ text: "Show HN: I built a link opener" },
-			{ text: "github.com/xiaowulang-turbo/OpenInNewTab", hit: true },
+			{ text: "github.com/shiroxw/OpenInNewTab", hit: true },
 			{ text: "Ask HN: how do you manage 100 tabs?" },
 			{ text: "Web browser — Wikipedia" },
 		];
