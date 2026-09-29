@@ -92,8 +92,8 @@ The format follows [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/
 ### Earlier
 - Iterative releases; detailed history not preserved.
 
-[1.7.1]: https://github.com/shiroxw/OpenInNewTab/releases
-[1.7.0]: https://github.com/shiroxw/OpenInNewTab/releases
-[1.6.0]: https://github.com/shiroxw/OpenInNewTab/releases
-[1.4.x]: https://github.com/shiroxw/OpenInNewTab/releases
-[1.3.x]: https://github.com/shiroxw/OpenInNewTab/releases
+[1.7.1]: https://github.com/shiroixw/OpenInNewTab/releases
+[1.7.0]: https://github.com/shiroixw/OpenInNewTab/releases
+[1.6.0]: https://github.com/shiroixw/OpenInNewTab/releases
+[1.4.x]: https://github.com/shiroixw/OpenInNewTab/releases
+[1.3.x]: https://github.com/shiroixw/OpenInNewTab/releases
