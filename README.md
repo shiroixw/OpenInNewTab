@@ -21,7 +21,7 @@ The whitelist-based approach means:
 
 **Example**: If you add `github.com` to your whitelist, all links on GitHub will open in new tabs. Other websites like Google, Twitter, etc., will remain unchanged unless you also add them to the whitelist.
 
-📖 **[Official Website](https://open-in-new-tab.vercel.app/)** | 🎯 **[Greasy Fork Script](https://greasyfork.org/en/scripts/551033-open-in-new-tab)** | 🌟 **[Star on GitHub](https://github.com/xiaowulang-turbo/OpenInNewTab)**
+📖 **[Official Website](https://open-in-new-tab.vercel.app/)** | 🎯 **[Greasy Fork Script](https://greasyfork.org/en/scripts/551033-open-in-new-tab)** | 🌟 **[Star on GitHub](https://github.com/shiroixw/OpenInNewTab)**
 
 ## Project Structure
 

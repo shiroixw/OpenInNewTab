@@ -4,7 +4,7 @@
 
 A Chrome extension that forces all links to open in new tab using a whitelist-based approach with dark mode and internationalization support.
 
-📖 **[Official Website](https://open-in-new-tab.vercel.app/)** | 🎯 **[Greasy Fork Script](https://greasyfork.org/en/scripts/551033-open-in-new-tab)** | 🌟 **[GitHub Repository](https://github.com/xiaowulang-turbo/OpenInNewTab)**
+📖 **[Official Website](https://open-in-new-tab.vercel.app/)** | 🎯 **[Greasy Fork Script](https://greasyfork.org/en/scripts/551033-open-in-new-tab)** | 🌟 **[GitHub Repository](https://github.com/shiroixw/OpenInNewTab)**
 
 ## 🎯 Quick Start Guide
 
@@ -56,7 +56,7 @@ The extension will be available on Chrome Web Store soon. Stay tuned!
 1. **Clone or download the project:**
 
     ```bash
-    git clone https://github.com/xiaowulang-turbo/OpenInNewTab.git
+    git clone https://github.com/shiroixw/OpenInNewTab.git
     cd OpenInNewTab/extension
     ```
 

@@ -6,7 +6,7 @@ A Tampermonkey userscript that forces all links to open in new tab using a white
 
 > **Versioning**: the userscript ships on its own SemVer track, independent from the Chrome extension version. See [`../CHANGELOG.md`](../CHANGELOG.md) for the userscript release history.
 
-📖 **[Official Website](https://open-in-new-tab.vercel.app/)** | 🎯 **[Install from Greasy Fork](https://greasyfork.org/en/scripts/551033-open-in-new-tab)** | 🌟 **[GitHub Repository](https://github.com/xiaowulang-turbo/OpenInNewTab)**
+📖 **[Official Website](https://open-in-new-tab.vercel.app/)** | 🎯 **[Install from Greasy Fork](https://greasyfork.org/en/scripts/551033-open-in-new-tab)** | 🌟 **[GitHub Repository](https://github.com/shiroixw/OpenInNewTab)**
 
 ## Features
 

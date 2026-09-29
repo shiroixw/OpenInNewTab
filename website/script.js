@@ -43,7 +43,7 @@
 
                 if (copyType === "userscript") {
                     textToCopy =
-                        "https://github.com/xiaowulang-turbo/OpenInNewTab/blob/main/userscript/OpenInNewTab.user.js"
+                        "https://github.com/shiroixw/OpenInNewTab/blob/main/userscript/OpenInNewTab.user.js"
                 }
 
                 const currentLang = i18n.resolveStoredLocale(

@@ -27,4 +27,4 @@ This extension does not use any third-party services, analytics, or tracking too
 We may update this privacy policy from time to time. Changes will be posted on this page.
 
 ## Contact
-For questions about this privacy policy, please visit: https://github.com/xiaowulang-turbo/OpenInNewTab/issues
+For questions about this privacy policy, please visit: https://github.com/shiroixw/OpenInNewTab/issues
