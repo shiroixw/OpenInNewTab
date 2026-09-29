@@ -19,7 +19,7 @@
 
 **示例**：如果您将 `github.com` 添加到白名单，GitHub 上的所有链接都会在新标签页中打开。其他网站（如 Google、Twitter 等）将保持不变，除非您也将它们添加到白名单中。
 
-📖 **[官方网站](https://open-in-new-tab.vercel.app/)** | 🎯 **[Greasy Fork 脚本](https://greasyfork.org/zh-CN/scripts/551033-open-in-new-tab)** | 🌟 **[在 GitHub 上点赞](https://github.com/xiaowulang-turbo/OpenInNewTab)**
+📖 **[官方网站](https://open-in-new-tab.vercel.app/)** | 🎯 **[Greasy Fork 脚本](https://greasyfork.org/zh-CN/scripts/551033-open-in-new-tab)** | 🌟 **[在 GitHub 上点赞](https://github.com/shiroxw/OpenInNewTab)**
 
 ## 项目结构
 
