@@ -58,7 +58,7 @@ The format follows [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/
 
 ## Extension
 
-### Unreleased
+### [1.7.1] — 2026-10-01
 
 #### Changed
 - Content script now remounts interceptors when the whitelist or
