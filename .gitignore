@@ -6,5 +6,6 @@ release/OpenInNewTab-extension-*.zip
 
 node_modules
 settings.json
+gcm-diagnose.log
 .codebuddy
 .cursor
