@@ -54,7 +54,8 @@
     const SCRIPT_VERSION = "1.7.1"
     const PROJECT_HOME = "https://github.com/shiroixw/OpenInNewTab"
     const GREASY_FORK_SCRIPT_PATH = "scripts/551033-open-in-new-tab"
-    // Official landing page (vercel.json → outputDirectory: "website").
+    // Official landing page, served by the `open-in-new-tab` Vercel project
+    // (Root Directory = website/, config in website/vercel.json).
     // Query string is a soft signal for future analytics; the page itself
     // does not need to read it.
     const WELCOME_URL =
