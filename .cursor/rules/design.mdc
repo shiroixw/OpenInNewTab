@@ -41,5 +41,5 @@ alwaysApply: true
 
 ## 跨端一致性
 
-- 官网与扩展（popup / options / welcome）应共用同一套语义 token 名 + 同一 accent；扩展端已统一为 teal accent（暗 `#2dd4bf` / 亮 `#0d9488`，详见 `extension/STYLE_GUIDE.md`），token 仍沿用 `--btn-primary*` 命名，向官网 `--color-accent*` 收敛为后续 backlog
+- 官网与扩展（popup / options / welcome）共用同一套语义 token 名 + 同一 accent。扩展端已统一为 teal accent（暗 `#2dd4bf` / 亮 `#0d9488`，详见 `extension/STYLE_GUIDE.md`），并且 `--btn-primary*` → `--color-accent*` 改名已全量完成；颜色契约的单一事实来源是 `shared/STYLE_TOKENS.md`，改色只改该文件并同步双端 MIRROR
 - 同步改动后，必须同步更新 `website/README.md` 的 Design Principles 段
