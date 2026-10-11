@@ -14,6 +14,20 @@ The format follows [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/
 
 ## Userscript
 
+### [1.8.0] — 2026-10-11
+
+#### Added
+- Opt-in **Mark visited links** preference (Settings → Preferences). Links
+  opened through the script's new-tab interception are remembered (up to 2000
+  URLs, stored via `GM_setValue`) and recolored with the browser's own
+  `VisitedText` colour, which follows light / dark mode. Marks update live
+  across tabs, apply to dynamically added links, and are removed when the
+  option is turned off or the domain leaves the whitelist. Fixes #3.
+
+#### Fixed
+- Adding the current domain to the whitelist no longer requires a reload
+  before the page's existing links are patched to open in a new tab.
+
 ### [1.7.1] — 2026-05-30
 
 #### Changed
