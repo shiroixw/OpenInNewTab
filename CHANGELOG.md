@@ -17,8 +17,8 @@ The format follows [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/
 ### [1.8.0] — 2026-10-11
 
 #### Added
-- Opt-in **Mark visited links** preference (Settings → Preferences). Links
-  opened through the script's new-tab interception are remembered (up to 2000
+- **Mark visited links** preference (Settings → Preferences), on by default.
+  Links opened through the script's new-tab interception are remembered (up to 2000
   URLs, stored via `GM_setValue`) and recolored with the browser's own
   `VisitedText` colour, which follows light / dark mode. Marks update live
   across tabs, apply to dynamically added links, and are removed when the

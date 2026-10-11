@@ -17,7 +17,7 @@ A Tampermonkey userscript that forces all links to open in new tab using a white
 -   **User-Friendly Management**: Menu-based whitelist management
 -   **Whitelist Manager**: Complete interface to view, add, modify, and remove domains
 -   **Persistent Storage**: Uses Tampermonkey's GM\_\* APIs to store user preferences
--   **Visited Link Marking** (opt-in): Recolors links you opened from whitelisted sites, since intercepted new-tab navigations may not trigger the browser's own `:visited` styling
+-   **Visited Link Marking** (on by default, can be turned off in Settings): Recolors links you opened from whitelisted sites, since intercepted new-tab navigations may not trigger the browser's own `:visited` styling
 -   **Dark Mode Support**: Automatically adapts to system dark/light mode preferences
 -   **Modern UI**: Clean, responsive design with smooth animations and hover effects
 -   **Internationalization**: Automatic language detection (English / 简体中文 / 繁體中文) based on browser settings
@@ -144,7 +144,7 @@ The userscript and the Chrome extension share the same core whitelist logic and 
 | Theme manual override (Auto / Light / Dark) | ✅ | ✅ |
 | Language manual override (Auto / English / 中文) | ✅ | ✅ |
 | JSON whitelist import / export | ✅ | ✅ (Tampermonkey menu → Open Settings) |
-| Mark visited links (opt-in, stored locally) | ❌ | ✅ |
+| Mark visited links (on by default, stored locally) | ❌ | ✅ |
 | Toast notifications (non-blocking) | ✅ | ✅ |
 | Welcome / onboarding page | ✅ on install | ✅ via `GM_openInTab`, falls back to a clickable toast |
 | Background open (`active: false`, no focus steal) | ✅ | ⚠️ Experimental — opt-in, requires `GM_openInTab` (Tampermonkey only) |

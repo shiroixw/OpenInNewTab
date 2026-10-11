@@ -54,7 +54,7 @@
         theme: "auto", // "auto" | "light" | "dark"
         language: "auto", // "auto" | "en" | "zh"
         openInBackground: false,
-        markVisitedLinks: false,
+        markVisitedLinks: true,
     })
 
     const SCRIPT_VERSION = "1.8.0"
