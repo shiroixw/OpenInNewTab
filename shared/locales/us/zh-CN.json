@@ -34,6 +34,8 @@
     "prefsOpenInBg": "新链接在后台标签页打开",
     "prefsOpenInBgHint": "实验性 · 需要 Tampermonkey",
     "prefsOpenInBgUnavailable": "当前脚本管理器不支持 GM_openInTab",
+    "prefsMarkVisited": "标记已访问链接",
+    "prefsMarkVisitedHint": "改变通过本脚本打开过的链接颜色",
     "aboutVersion": "版本",
     "aboutHomepage": "GitHub",
     "aboutGreasyFork": "Greasy Fork",

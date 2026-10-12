@@ -3,7 +3,7 @@
 // @name:zh-CN        Open In New Tab - 链接强制新标签页打开
 // @name:zh-TW        Open In New Tab - 連結強制新分頁開啟
 // @namespace         https://github.com/shiroixw/OpenInNewTab
-// @version           1.7.1
+// @version           1.8.0
 // @description       Force links to open in a new tab on whitelisted sites only. One-click add or remove the current domain from the Tampermonkey menu, with subdomain matching, dynamic-content support, dark mode, and English / 简体中文 / 繁體中文 UI. Other sites stay untouched.
 // @description:zh-CN 基于白名单的链接拦截脚本：仅在你勾选的网站把链接强制改为新标签页打开，其它网站完全不受影响。油猴菜单一键加入/移出当前域名，支持子域名匹配、深色模式与中英文界面。
 // @description:zh-TW 基於白名單的連結攔截腳本：僅在你勾選的網站把連結強制改為新分頁開啟，其它網站完全不受影響。油猴選單一鍵加入/移出目前網域，支援子網域匹配、深色模式與中英文介面。
@@ -36,22 +36,28 @@
     const STORAGE_KEY_THEME = "theme"
     const STORAGE_KEY_LANGUAGE = "language"
     const STORAGE_KEY_OPEN_IN_BG = "openInBackground"
+    const STORAGE_KEY_MARK_VISITED = "markVisitedLinks"
+    const STORAGE_KEY_VISITED = "visitedLinks"
     const STORAGE_KEY_INSTALLED_AT = "__installed_at"
     const PATCHED_ATTR = "data-oint-patched"
+    const VISITED_ATTR = "data-oint-visited"
+    const VISITED_LINKS_LIMIT = 2000
 
     const SETTINGS_KEYS = [
         STORAGE_KEY_THEME,
         STORAGE_KEY_LANGUAGE,
         STORAGE_KEY_OPEN_IN_BG,
+        STORAGE_KEY_MARK_VISITED,
     ]
 
     const DEFAULT_SETTINGS = Object.freeze({
         theme: "auto", // "auto" | "light" | "dark"
         language: "auto", // "auto" | "en" | "zh"
         openInBackground: false,
+        markVisitedLinks: true,
     })
 
-    const SCRIPT_VERSION = "1.7.1"
+    const SCRIPT_VERSION = "1.8.0"
     const PROJECT_HOME = "https://github.com/shiroixw/OpenInNewTab"
     const GREASY_FORK_SCRIPT_PATH = "scripts/551033-open-in-new-tab"
     // Official landing page (vercel.json → outputDirectory: "website").
@@ -68,7 +74,8 @@
      *   pendingNodes: Node[],
      *   scheduled: boolean,
      *   listenerIds: any[],
-     *   settings: { theme: string, language: string, openInBackground: boolean },
+     *   settings: { theme: string, language: string, openInBackground: boolean, markVisitedLinks: boolean },
+     *   visited: Set<string>,
      *   caps: { canUnregisterMenu: boolean, canListenStorage: boolean, canOpenInTab: boolean },
      *   toastContainer: HTMLElement|null,
      *   toasts: HTMLElement[]
@@ -82,6 +89,7 @@
         scheduled: false,
         listenerIds: [],
         settings: { ...DEFAULT_SETTINGS },
+        visited: new Set(),
         caps: {
             canUnregisterMenu: false,
             canListenStorage: false,
@@ -156,6 +164,13 @@
                 ? "zh-CN"
                 : langRaw || DEFAULT_SETTINGS.language
         state.settings.openInBackground = Boolean(openInBackground)
+        state.settings.markVisitedLinks = Boolean(
+            GM_getValue(
+                STORAGE_KEY_MARK_VISITED,
+                DEFAULT_SETTINGS.markVisitedLinks
+            )
+        )
+        state.visited = new Set(GM_getValue(STORAGE_KEY_VISITED, []))
     }
 
     /**
@@ -171,6 +186,8 @@
         else if (key === STORAGE_KEY_LANGUAGE) state.settings.language = value
         else if (key === STORAGE_KEY_OPEN_IN_BG)
             state.settings.openInBackground = Boolean(value)
+        else if (key === STORAGE_KEY_MARK_VISITED)
+            state.settings.markVisitedLinks = Boolean(value)
     }
 
     /**
@@ -333,6 +350,8 @@
             "prefsOpenInBg": "Open links in a background tab",
             "prefsOpenInBgHint": "Experimental · requires Tampermonkey",
             "prefsOpenInBgUnavailable": "Your script manager does not support GM_openInTab",
+            "prefsMarkVisited": "Mark visited links",
+            "prefsMarkVisitedHint": "Recolor links you opened from this script",
             "aboutVersion": "Version",
             "aboutHomepage": "GitHub",
             "aboutGreasyFork": "Greasy Fork",
@@ -378,6 +397,8 @@
             "prefsOpenInBg": "新链接在后台标签页打开",
             "prefsOpenInBgHint": "实验性 · 需要 Tampermonkey",
             "prefsOpenInBgUnavailable": "当前脚本管理器不支持 GM_openInTab",
+            "prefsMarkVisited": "标记已访问链接",
+            "prefsMarkVisitedHint": "改变通过本脚本打开过的链接颜色",
             "aboutVersion": "版本",
             "aboutHomepage": "GitHub",
             "aboutGreasyFork": "Greasy Fork",
@@ -423,6 +444,8 @@
             "prefsOpenInBg": "新連結在背景分頁開啟",
             "prefsOpenInBgHint": "實驗性 · 需要 Tampermonkey",
             "prefsOpenInBgUnavailable": "目前的腳本管理器不支援 GM_openInTab",
+            "prefsMarkVisited": "標記已訪問連結",
+            "prefsMarkVisitedHint": "改變透過本腳本開啟過的連結顏色",
             "aboutVersion": "版本",
             "aboutHomepage": "GitHub",
             "aboutGreasyFork": "Greasy Fork",
@@ -910,6 +933,20 @@
                     </div>
                 </div>
 
+                <div class="oint-pref-row" style="${prefRowStyle}">
+                    <label style="display:flex; align-items:center; gap:8px; font-size:13px; font-weight:500; color:${
+                        colors.textPrimary
+                    }; cursor:pointer;">
+                        <input type="checkbox" id="oint-visited-toggle" ${
+                            settings.markVisitedLinks ? "checked" : ""
+                        }>
+                        <span>${escapeHtml(getText("prefsMarkVisited", lang))}</span>
+                    </label>
+                    <small style="color:${colors.textSecondary}; font-size:11px;">${escapeHtml(
+            getText("prefsMarkVisitedHint", lang)
+        )}</small>
+                </div>
+
                 <div class="oint-pref-row" style="${prefRowStyle} border-bottom: none;">
                     <label style="display:flex; align-items:center; gap:8px; font-size:13px; font-weight:500; color:${
                         colors.textPrimary
@@ -1105,6 +1142,13 @@
                     rerenderModalIfOpen()
                 })
             })
+        const visitedToggle = modal.querySelector("#oint-visited-toggle")
+        if (visitedToggle) {
+            visitedToggle.addEventListener("change", (e) => {
+                saveSetting(STORAGE_KEY_MARK_VISITED, e.target.checked)
+                applyToCurrentPage()
+            })
+        }
         const bgToggle = modal.querySelector("#oint-bg-toggle")
         if (bgToggle) {
             bgToggle.addEventListener("change", (e) => {
@@ -1427,6 +1471,8 @@
         event.stopPropagation()
         event.stopImmediatePropagation()
 
+        if (state.settings.markVisitedLinks) rememberVisit(link)
+
         if (state.caps.canOpenInTab && state.settings.openInBackground) {
             try {
                 GM_openInTab(link.href, {
@@ -1465,13 +1511,55 @@
     }
 
     /**
-     * Walk a subtree and patch every anchor descendant.
+     * Intercepted navigations never register as :visited on the source page
+     * (the tab is opened outside its history context), so visited links are
+     * tracked here. `VisitedText` is the browser's own visited colour and
+     * `color-scheme` keeps it readable in light and dark themes.
+     * @param {HTMLAnchorElement} link
+     */
+    function markVisitedLink(link) {
+        if (state.visited.has(link.href)) {
+            link.setAttribute(VISITED_ATTR, "1")
+            link.style.setProperty("color-scheme", "light dark")
+            link.style.setProperty("color", "VisitedText", "important")
+        } else {
+            unmarkVisitedLink(link)
+        }
+    }
+
+    function unmarkVisitedLink(link) {
+        if (link.hasAttribute(VISITED_ATTR)) {
+            link.removeAttribute(VISITED_ATTR)
+            link.style.removeProperty("color-scheme")
+            link.style.removeProperty("color")
+        }
+    }
+
+    /**
+     * Persist a visited URL (most recent last, capped) and mark its link.
+     * @param {HTMLAnchorElement} link
+     */
+    function rememberVisit(link) {
+        const urls = [...state.visited].filter((u) => u !== link.href)
+        urls.push(link.href)
+        state.visited = new Set(urls.slice(-VISITED_LINKS_LIMIT))
+        markVisitedLink(link)
+        GM_setValue(STORAGE_KEY_VISITED, [...state.visited])
+    }
+
+    function processLink(link) {
+        patchLinkTarget(link)
+        if (state.settings.markVisitedLinks) markVisitedLink(link)
+    }
+
+    /**
+     * Walk a subtree and process every anchor descendant.
      * @param {Node} root
      */
-    function patchLinksUnder(root) {
+    function processLinksUnder(root) {
         if (!root || root.nodeType !== Node.ELEMENT_NODE) return
-        if (root.matches?.("a[href]")) patchLinkTarget(root)
-        root.querySelectorAll?.("a[href]").forEach(patchLinkTarget)
+        if (root.matches?.("a[href]")) processLink(root)
+        root.querySelectorAll?.("a[href]").forEach(processLink)
     }
 
     /**
@@ -1486,12 +1574,18 @@
         })
     }
 
+    function removeVisitedMarks() {
+        document
+            .querySelectorAll(`a[${VISITED_ATTR}]`)
+            .forEach(unmarkVisitedLink)
+    }
+
     /** Idle-batched flush for collected mutations. */
     function flushPendingPatches() {
         state.scheduled = false
         const batch = state.pendingNodes
         state.pendingNodes = []
-        for (const node of batch) patchLinksUnder(node)
+        for (const node of batch) processLinksUnder(node)
     }
 
     function schedulePatchFlush() {
@@ -1547,10 +1641,11 @@
         if (shouldApply && !state.isApplied) {
             // Click capture works without DOM ready, bind ASAP.
             document.addEventListener("click", handleLinkClick, true)
+            state.isApplied = true
 
             const onBodyReady = () => {
                 if (!state.isApplied) return
-                patchLinksUnder(document.body)
+                processLinksUnder(document.body)
                 startObserver()
             }
             if (document.body) {
@@ -1560,8 +1655,6 @@
                     once: true,
                 })
             }
-
-            state.isApplied = true
             return
         }
 
@@ -1569,7 +1662,18 @@
             document.removeEventListener("click", handleLinkClick, true)
             stopObserver()
             removePatchedTargets()
+            removeVisitedMarks()
             state.isApplied = false
+            return
+        }
+
+        if (shouldApply) {
+            // Visited marks follow the setting / stored URLs without a reload.
+            if (state.settings.markVisitedLinks) {
+                processLinksUnder(document.body)
+            } else {
+                removeVisitedMarks()
+            }
         }
     }
 
@@ -1665,7 +1769,13 @@
             }
         })
 
-        // Settings changes only re-render UI; they do not affect interception.
+        // Cross-tab visits: re-mark links already on the page.
+        safeAdd(STORAGE_KEY_VISITED, (_name, _old, value) => {
+            state.visited = new Set(value)
+            applyToCurrentPage()
+        })
+
+        // Settings changes re-render UI; only the visited toggle touches links.
         for (const key of SETTINGS_KEYS) {
             safeAdd(key, (_name, _old, value) => {
                 if (key === STORAGE_KEY_THEME) state.settings.theme = value
@@ -1673,6 +1783,10 @@
                     state.settings.language = value
                 else if (key === STORAGE_KEY_OPEN_IN_BG)
                     state.settings.openInBackground = Boolean(value)
+                else if (key === STORAGE_KEY_MARK_VISITED) {
+                    state.settings.markVisitedLinks = Boolean(value)
+                    applyToCurrentPage()
+                }
                 refreshMenu()
                 rerenderModalIfOpen()
             })

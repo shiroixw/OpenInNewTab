@@ -34,6 +34,8 @@
     "prefsOpenInBg": "Open links in a background tab",
     "prefsOpenInBgHint": "Experimental · requires Tampermonkey",
     "prefsOpenInBgUnavailable": "Your script manager does not support GM_openInTab",
+    "prefsMarkVisited": "Mark visited links",
+    "prefsMarkVisitedHint": "Recolor links you opened from this script",
     "aboutVersion": "Version",
     "aboutHomepage": "GitHub",
     "aboutGreasyFork": "Greasy Fork",

@@ -61,7 +61,7 @@ Choose your preferred version:
 
 -   **Best for**: Quick testing, development, or users who prefer Tampermonkey
 -   **Install from**: [Greasy Fork](https://greasyfork.org/en/scripts/551033-open-in-new-tab) | [See userscript/README.md](userscript/README.md#installation) ([中文](userscript/README.zh-CN.md#安装))
--   **Features**: Menu-based management, dark mode, internationalization
+-   **Features**: Menu-based management, visited-link marking, dark mode, internationalization
 
 ### 🌐 Chrome Extension Version
 

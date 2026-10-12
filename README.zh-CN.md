@@ -59,7 +59,7 @@
 
 -   **适合场景**：快速测试、开发环境或喜欢使用 Tampermonkey 的用户
 -   **安装方式**：[Greasy Fork](https://greasyfork.org/zh-CN/scripts/551033-open-in-new-tab) | [查看 userscript/README.zh-CN.md](userscript/README.zh-CN.md#安装) ([English](userscript/README.md#installation))
--   **功能特性**：菜单管理、暗色模式、国际化
+-   **功能特性**：菜单管理、已访问链接标记、暗色模式、国际化
 
 ### 🌐 Chrome 扩展版本
 
