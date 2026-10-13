@@ -90,6 +90,10 @@ The website is currently deployed on **Vercel** at [https://open-in-new-tab.verc
     - Set root directory to `website`
     - Deploy
 
+> **Where `vercel.json` lives:** the project's Root Directory is `website`,
+> so Vercel only reads `website/vercel.json`. A `vercel.json` at the repo
+> root is ignored, and the deploy silently falls back to platform defaults.
+
 #### Netlify
 
 1. **Drag and Drop:**
