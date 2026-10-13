@@ -5,6 +5,7 @@
         "checkJs": false,
         "skipLibCheck": true,
         "target": "ES2022",
+        "lib": ["ES2022", "DOM", "DOM.Iterable"],
         "module": "ESNext",
         "moduleResolution": "Bundler"
     },
@@ -12,8 +13,14 @@
         "extension/**/*.js",
         "userscript/**/*.js",
         "website/**/*.js",
+        "shared/**/*.js",
         "scripts/**/*.mjs",
         "tests/**/*.mjs"
     ],
-    "exclude": ["node_modules", "release"]
+    "exclude": [
+        "node_modules",
+        "release",
+        "extension/i18n-bundle.js",
+        "website/i18n.js"
+    ]
 }

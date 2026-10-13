@@ -1,3 +1,4 @@
+// @ts-check
 /**
  * Pure host / click policy shared by content.js (module) and Node tests.
  * No DOM writes, no chrome APIs.

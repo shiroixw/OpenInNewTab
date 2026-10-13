@@ -1,6 +1,18 @@
 #!/usr/bin/env sh
 STAGED=$(git diff --cached --name-only --diff-filter=ACM)
 
+# Type-check the opted-in JS surfaces whenever JS or the tsconfig changes.
+# tsconfig.json keeps `checkJs` off; files opt in with `// @ts-check`, so
+# coverage grows one file at a time without a flag day.
+if echo "$STAGED" | grep -qE '\.(js|mjs)$|^tsconfig\.json$'; then
+	if ! npm run --silent lint:tsc; then
+		echo ""
+		echo "Hint: lint:tsc failed. Add the missing types, or drop the"
+		echo "'// @ts-check' opt-in from a file you are not ready to cover."
+		exit 1
+	fi
+fi
+
 # Verify version invariants whenever a versioned tree is touched.
 # Scope (post-decoupling):
 #   extension/manifest.json  ==  website <meta name="app-version" />
