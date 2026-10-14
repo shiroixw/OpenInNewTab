@@ -25,6 +25,8 @@
     "openInBackgroundLabel": "在背景開啟新分頁",
     "openInBackgroundDesc": "開啟連結時不切換焦點，留在目前分頁",
     "openInBackgroundTitle": "在背景開啟",
+    "markVisitedLinksLabel": "標記已訪問連結",
+    "markVisitedLinksDesc": "改變透過本擴充功能開啟過的連結顏色",
     "moreSettings": "更多設定",
     "cannotDetectCurrentDomain": "無法辨識目前網域",
     "optionsTitle": "擴充功能設定",

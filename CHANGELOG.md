@@ -60,6 +60,14 @@ The format follows [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/
 
 ### Unreleased
 
+#### Added
+- **Mark visited links** preference (Settings → Link behavior), on by default.
+  Links opened through the extension's interception are remembered (up to 2000
+  URLs, stored in `chrome.storage.local`) and recolored with the browser's own
+  `VisitedText` colour, which follows light / dark mode. Marks update live
+  across tabs, apply to dynamically added links, and are removed when the
+  option is turned off or the domain leaves the whitelist. Fixes #3.
+
 #### Changed
 - Content script now remounts interceptors when the whitelist or
   background-tab preference changes, so popup / options edits apply without
