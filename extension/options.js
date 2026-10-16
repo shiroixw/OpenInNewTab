@@ -109,6 +109,7 @@
         }
     }
 
+
     /**
      * Get text by language
      * @param {string} key Text key
@@ -492,6 +493,7 @@
                     openInBackgroundToggle.checked
                 )
             })
+
 
             const addBtn = document.getElementById("addDomainBtn")
             const input = document.getElementById("newDomainInput")

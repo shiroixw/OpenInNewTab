@@ -1,5 +1,5 @@
 /**
- * Content script: whitelist-gated click intercept and optional target=_blank patch.
+ * Content script: whitelist-gated click intercept and target=_blank patch.
  *
  * Chrome injects content scripts as classic scripts (the manifest has no
  * module support), so the pure policy in link-policy.js is pulled in with a
@@ -11,16 +11,20 @@
 ;(async () => {
     "use strict"
 
-    const { isHostAllowed, shouldSkipClick } = await import(
+    const { isHostAllowed, shouldSkipClick, shouldSkipHref } = await import(
         chrome.runtime.getURL("link-policy.js")
     )
 
     const MSG_OPEN_TAB = "OPEN_TAB"
     const PATCHED_ATTR = "data-oint-patched"
+    const VISITED_ATTR = "data-oint-visited"
+    const STORAGE_KEY_VISITED = "visitedLinks"
+    const VISITED_LINKS_LIMIT = 2000
 
     const state = {
         whitelist: [],
         openInBackground: false,
+        visited: new Set(),
         intercepting: false,
         observer: null,
         pending: [],
@@ -79,6 +83,8 @@
         event.stopPropagation()
         event.stopImmediatePropagation()
 
+        rememberVisit(link)
+
         chrome.runtime
             .sendMessage({
                 type: MSG_OPEN_TAB,
@@ -97,7 +103,8 @@
         if (
             link.target ||
             link.hasAttribute("download") ||
-            link.hasAttribute(PATCHED_ATTR)
+            link.hasAttribute(PATCHED_ATTR) ||
+            shouldSkipHref(link.getAttribute("href"))
         ) {
             return
         }
@@ -106,14 +113,65 @@
         link.setAttribute(PATCHED_ATTR, "1")
     }
 
+    /**
+     * Intercepted navigations never register as :visited on the source page
+     * (the tab is opened outside its history context), so visited links are
+     * tracked here. `VisitedText` is the browser's own visited colour and
+     * `color-scheme` keeps it readable in light and dark themes.
+     * @param {HTMLAnchorElement} link
+     */
+    function markVisitedLink(link) {
+        if (state.visited.has(link.href)) {
+            link.setAttribute(VISITED_ATTR, "1")
+            link.style.setProperty("color-scheme", "light dark")
+            link.style.setProperty("color", "VisitedText", "important")
+        } else {
+            unmarkVisitedLink(link)
+        }
+    }
+
+    function unmarkVisitedLink(link) {
+        if (link.hasAttribute(VISITED_ATTR)) {
+            link.removeAttribute(VISITED_ATTR)
+            link.style.removeProperty("color-scheme")
+            link.style.removeProperty("color")
+        }
+    }
+
+    /**
+     * @param {HTMLAnchorElement} link
+     */
+    function rememberVisit(link) {
+        const urls = [...state.visited].filter((u) => u !== link.href)
+        urls.push(link.href)
+        state.visited = new Set(urls.slice(-VISITED_LINKS_LIMIT))
+        markVisitedLink(link)
+        chrome.storage.local
+            .set({ [STORAGE_KEY_VISITED]: [...state.visited] })
+            .catch((error) => {
+                console.error("Error saving visited links:", error)
+            })
+    }
+
+    function processLink(link) {
+        patchLinkTarget(link)
+        markVisitedLink(link)
+    }
+
     function patchLinksUnder(root) {
         if (!root || root.nodeType !== Node.ELEMENT_NODE) {
             return
         }
         if (root.matches?.("a[href]")) {
-            patchLinkTarget(root)
+            processLink(root)
         }
-        root.querySelectorAll?.("a[href]").forEach(patchLinkTarget)
+        root.querySelectorAll?.("a[href]").forEach(processLink)
+    }
+
+    function removeVisitedMarks() {
+        document
+            .querySelectorAll(`a[${VISITED_ATTR}]`)
+            .forEach(unmarkVisitedLink)
     }
 
     function removePatchedTargets() {
@@ -202,6 +260,7 @@
     function teardownPatching() {
         stopObserver()
         removePatchedTargets()
+        removeVisitedMarks()
     }
 
     function syncPatching() {
@@ -239,17 +298,40 @@
             ? result.userWhitelist
             : []
         state.openInBackground = !!result.openInBackground
+        state.visited = new Set(
+            Array.isArray(result.visitedLinks) ? result.visitedLinks : []
+        )
         applyToPage()
     }
 
-    chrome.storage.sync
-        .get(["userWhitelist", "openInBackground"])
-        .then(applyStorage)
+    Promise.all([
+        chrome.storage.sync.get([
+            "userWhitelist",
+            "openInBackground",
+        ]),
+        chrome.storage.local.get([STORAGE_KEY_VISITED]),
+    ])
+        .then(([syncResult, localResult]) =>
+            applyStorage({ ...syncResult, ...localResult })
+        )
         .catch((error) => {
             console.error("Error loading intercept state:", error)
         })
 
+    /**
+     * Visited marks follow the stored URLs without a reload.
+     */
+    function syncVisitedMarks() {
+        if (document.body) patchLinksUnder(document.body)
+    }
+
     chrome.storage.onChanged.addListener((changes, area) => {
+        if (area === "local" && changes[STORAGE_KEY_VISITED]) {
+            const next = changes[STORAGE_KEY_VISITED].newValue
+            state.visited = new Set(Array.isArray(next) ? next : [])
+            if (state.intercepting) syncVisitedMarks()
+            return
+        }
         if (area !== "sync") {
             return
         }
