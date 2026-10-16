@@ -8,16 +8,19 @@ const root = join(dirname(fileURLToPath(import.meta.url)), "..")
 const contentScript = readFileSync(join(root, "extension/content.js"), "utf8")
 const optionsScript = readFileSync(join(root, "extension/options.js"), "utf8")
 const optionsHtml = readFileSync(join(root, "extension/options.html"), "utf8")
+const enLocale = readFileSync(
+    join(root, "shared/locales/ext/en.json"),
+    "utf8"
+)
 
 describe("extension visited-link marking", () => {
-    it("defaults the setting to on in the content script", () => {
+    it("is always on with no preference state", () => {
+        assert.doesNotMatch(contentScript, /markVisitedLinks/)
+        assert.doesNotMatch(contentScript, /STORAGE_KEY_MARK_VISITED/)
+        assert.match(contentScript, /rememberVisit\(link\)/)
         assert.match(
             contentScript,
-            /markVisitedLinks:\s*true/
-        )
-        assert.match(
-            contentScript,
-            /result\.markVisitedLinks\s*!==\s*false/
+            /function processLink\(link\) \{[\s\S]*?markVisitedLink\(link\)/
         )
     })
 
@@ -35,10 +38,7 @@ describe("extension visited-link marking", () => {
         )?.[1]
         assert.ok(handler, "content.js defines handleLinkClick")
         assert.match(handler, /rememberVisit\(link\)/)
-        assert.match(
-            contentScript,
-            /if \(state\.markVisitedLinks\) markVisitedLink\(link\)/
-        )
+        assert.match(contentScript, /markVisitedLink\(link\)/)
     })
 
     it("marks with the browser VisitedText colour and cleans up", () => {
@@ -53,7 +53,7 @@ describe("extension visited-link marking", () => {
         )
     })
 
-    it("reacts to live storage changes for marks and the setting", () => {
+    it("reacts to live storage changes for visited URLs", () => {
         assert.match(
             contentScript,
             /area === "local" && changes\[STORAGE_KEY_VISITED\]/
@@ -61,18 +61,22 @@ describe("extension visited-link marking", () => {
         assert.match(contentScript, /function syncVisitedMarks\(\)/)
     })
 
-    it("options toggle reads and writes the same sync key", () => {
+    it("does not patch same-document hash-only anchors with target=_blank", () => {
+        const patch = contentScript.match(
+            /function patchLinkTarget\(link\) \{([\s\S]*?)\n {4}\}/
+        )?.[1]
+        assert.ok(patch, "content.js defines patchLinkTarget")
+        assert.match(patch, /shouldSkipHref\(link\.getAttribute\("href"\)\)/)
         assert.match(
-            optionsScript,
-            /chrome\.storage\.sync\.get\(\["markVisitedLinks"\]\)/
+            contentScript,
+            /shouldSkipHref/
         )
-        assert.match(
-            optionsScript,
-            /chrome\.storage\.sync\.set\(\{ markVisitedLinks: enabled \}\)/
-        )
-        assert.match(
-            optionsHtml,
-            /id="markVisitedLinksToggle"[^>]*aria-label=/
-        )
+    })
+
+    it("has no options toggle or preference UI for visited marking", () => {
+        assert.doesNotMatch(optionsScript, /markVisitedLinks/)
+        assert.doesNotMatch(optionsHtml, /markVisitedLinks/)
+        assert.doesNotMatch(enLocale, /markVisitedLinksLabel/)
+        assert.doesNotMatch(enLocale, /markVisitedLinksDesc/)
     })
 })

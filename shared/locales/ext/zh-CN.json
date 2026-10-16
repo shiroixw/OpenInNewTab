@@ -25,8 +25,6 @@
     "openInBackgroundLabel": "在后台打开新标签",
     "openInBackgroundDesc": "打开链接时不切换焦点，留在当前页",
     "openInBackgroundTitle": "在后台打开",
-    "markVisitedLinksLabel": "标记已访问链接",
-    "markVisitedLinksDesc": "改变通过本扩展打开过的链接颜色",
     "moreSettings": "更多设置",
     "cannotDetectCurrentDomain": "无法识别当前域名",
     "optionsTitle": "扩展设置",

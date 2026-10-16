@@ -1,5 +1,5 @@
 /**
- * Content script: whitelist-gated click intercept and optional target=_blank patch.
+ * Content script: whitelist-gated click intercept and target=_blank patch.
  *
  * Chrome injects content scripts as classic scripts (the manifest has no
  * module support), so the pure policy in link-policy.js is pulled in with a
@@ -11,21 +11,19 @@
 ;(async () => {
     "use strict"
 
-    const { isHostAllowed, shouldSkipClick } = await import(
+    const { isHostAllowed, shouldSkipClick, shouldSkipHref } = await import(
         chrome.runtime.getURL("link-policy.js")
     )
 
     const MSG_OPEN_TAB = "OPEN_TAB"
     const PATCHED_ATTR = "data-oint-patched"
     const VISITED_ATTR = "data-oint-visited"
-    const STORAGE_KEY_MARK_VISITED = "markVisitedLinks"
     const STORAGE_KEY_VISITED = "visitedLinks"
     const VISITED_LINKS_LIMIT = 2000
 
     const state = {
         whitelist: [],
         openInBackground: false,
-        markVisitedLinks: true,
         visited: new Set(),
         intercepting: false,
         observer: null,
@@ -85,7 +83,7 @@
         event.stopPropagation()
         event.stopImmediatePropagation()
 
-        if (state.markVisitedLinks) rememberVisit(link)
+        rememberVisit(link)
 
         chrome.runtime
             .sendMessage({
@@ -105,7 +103,8 @@
         if (
             link.target ||
             link.hasAttribute("download") ||
-            link.hasAttribute(PATCHED_ATTR)
+            link.hasAttribute(PATCHED_ATTR) ||
+            shouldSkipHref(link.getAttribute("href"))
         ) {
             return
         }
@@ -156,7 +155,7 @@
 
     function processLink(link) {
         patchLinkTarget(link)
-        if (state.markVisitedLinks) markVisitedLink(link)
+        markVisitedLink(link)
     }
 
     function patchLinksUnder(root) {
@@ -299,7 +298,6 @@
             ? result.userWhitelist
             : []
         state.openInBackground = !!result.openInBackground
-        state.markVisitedLinks = result.markVisitedLinks !== false
         state.visited = new Set(
             Array.isArray(result.visitedLinks) ? result.visitedLinks : []
         )
@@ -310,7 +308,6 @@
         chrome.storage.sync.get([
             "userWhitelist",
             "openInBackground",
-            STORAGE_KEY_MARK_VISITED,
         ]),
         chrome.storage.local.get([STORAGE_KEY_VISITED]),
     ])
@@ -322,14 +319,10 @@
         })
 
     /**
-     * Visited marks follow the setting and the stored URLs without a reload.
+     * Visited marks follow the stored URLs without a reload.
      */
     function syncVisitedMarks() {
-        if (state.markVisitedLinks) {
-            if (document.body) patchLinksUnder(document.body)
-        } else {
-            removeVisitedMarks()
-        }
+        if (document.body) patchLinksUnder(document.body)
     }
 
     chrome.storage.onChanged.addListener((changes, area) => {
@@ -348,11 +341,6 @@
         }
         if (changes.openInBackground) {
             state.openInBackground = !!changes.openInBackground.newValue
-        }
-        if (changes[STORAGE_KEY_MARK_VISITED]) {
-            state.markVisitedLinks =
-                changes[STORAGE_KEY_MARK_VISITED].newValue !== false
-            if (state.intercepting) syncVisitedMarks()
         }
         if (changes.userWhitelist || changes.openInBackground) {
             applyToPage()
