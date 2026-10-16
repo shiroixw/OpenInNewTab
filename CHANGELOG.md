@@ -72,7 +72,7 @@ The format follows [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/
 
 ## Extension
 
-### [1.7.1] — 2026-10-01
+### [1.7.2] — 2026-10-16
 
 #### Added
 - **Visited-link marking** (always on). Links opened through the extension's
@@ -81,6 +81,12 @@ The format follows [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/
   colour, which follows light / dark mode. Marks update live across tabs,
   apply to dynamically added links, and are removed when the domain leaves
   the whitelist. Fixes #3.
+
+#### Fixed
+- Same-document hash-only anchors (`#section`) are no longer patched with
+  `target="_blank"`, so in-page navigation stays on the current tab.
+
+### [1.7.1] — 2026-10-01
 
 #### Changed
 - Content script now remounts interceptors when the whitelist or
@@ -95,8 +101,6 @@ The format follows [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/
 
 #### Fixed
 - Opening a link no longer races popup blockers after `await storage`.
-- Same-document hash-only anchors (`#section`) are no longer patched with
-  `target="_blank"`, so in-page navigation stays on the current tab.
 
 ---
 
@@ -116,6 +120,7 @@ The format follows [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/
 ### Earlier
 - Iterative releases; detailed history not preserved.
 
+[1.7.2]: https://github.com/shiroixw/OpenInNewTab/releases
 [1.7.1]: https://github.com/shiroixw/OpenInNewTab/releases
 [1.7.0]: https://github.com/shiroixw/OpenInNewTab/releases
 [1.6.0]: https://github.com/shiroixw/OpenInNewTab/releases
