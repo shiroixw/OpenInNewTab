@@ -102,9 +102,12 @@ body {
     color: var(--text-secondary);
 }
 
-/* Title + hint icon on one line (tooltip styles come from popup.css) */
+/* Title + hint icon on one line (tooltip styles come from popup.css).
+   1px bottom margin grows the flex line to 22px, so the stretched hint icon
+   centers 0.5px below the title's box — matching where CJK ink actually sits
+   (the system font's ascent/descent are asymmetric). */
 .setting-copy .setting-title {
-    margin-bottom: 0;
+    margin-bottom: 1px;
 }
 
 /* Button Group */

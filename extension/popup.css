@@ -604,10 +604,6 @@ select,
        ~13px circle — the same optical height as the 13px label text. */
     width: 16px;
     height: 16px;
-    /* Optical fix: CJK ink sits ~0.5px below the line-box center (the system
-       font's ascent/descent are asymmetric), so shift the icon down equally
-       to *look* centered next to the label. */
-    translate: 0 0.5px;
 }
 
 .setting-hint-tooltip {
