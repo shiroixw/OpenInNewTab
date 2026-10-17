@@ -11,9 +11,6 @@
             <header class="options-header">
                 <div class="header-content">
                     <h1 id="optionsTitle">Extension Settings</h1>
-                    <p id="optionsSubtitle" class="subtitle">
-                        Configure your preferences and manage whitelist
-                    </p>
                 </div>
             </header>
 
@@ -30,48 +27,42 @@
                                 <label class="setting-title" id="themeLabel"
                                     >Theme</label
                                 >
-                                <span class="setting-description" id="themeDesc"
-                                    >Choose your preferred theme</span
-                                >
                             </div>
                             <div class="theme-toggle-group">
                                 <button
                                     class="theme-option"
                                     data-theme="light"
                                     id="themeLightBtn"
+                                    title="Light"
+                                    aria-label="Light"
                                 >
                                     <svg class="icon theme-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                                         <circle cx="12" cy="12" r="4" />
                                         <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" />
                                     </svg>
-                                    <span class="theme-text" id="themeLightText"
-                                        >Light</span
-                                    >
                                 </button>
                                 <button
                                     class="theme-option"
                                     data-theme="dark"
                                     id="themeDarkBtn"
+                                    title="Dark"
+                                    aria-label="Dark"
                                 >
                                     <svg class="icon theme-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                                         <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
                                     </svg>
-                                    <span class="theme-text" id="themeDarkText"
-                                        >Dark</span
-                                    >
                                 </button>
                                 <button
                                     class="theme-option"
                                     data-theme="auto"
                                     id="themeAutoBtn"
+                                    title="Auto"
+                                    aria-label="Auto"
                                 >
                                     <svg class="icon theme-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                                         <rect width="20" height="14" x="2" y="3" rx="2" />
                                         <path d="M8 21h8M12 17v4" />
                                     </svg>
-                                    <span class="theme-text" id="themeAutoText"
-                                        >Auto</span
-                                    >
                                 </button>
                             </div>
                         </div>
@@ -81,13 +72,10 @@
                         <!-- Language Setting -->
                         <div class="setting-row">
                             <div class="setting-info">
-                                <label class="setting-title" id="languageLabel"
+                                <label
+                                    class="setting-title"
+                                    id="languageLabel"
                                     >Language</label
-                                >
-                                <span
-                                    class="setting-description"
-                                    id="languageDesc"
-                                    >Select your language</span
                                 >
                             </div>
                             <select id="languageSelect" class="language-select">
@@ -149,11 +137,6 @@
                                     id="importExportLabel"
                                     >Import / Export</label
                                 >
-                                <span
-                                    class="setting-description"
-                                    id="importExportDesc"
-                                    >Backup or restore your whitelist</span
-                                >
                             </div>
                             <div class="button-group">
                                 <button id="exportBtn" class="action-btn">
@@ -178,11 +161,6 @@
                             <div class="setting-info">
                                 <label class="setting-title" id="addDomainLabel"
                                     >Add Domain</label
-                                >
-                                <span
-                                    class="setting-description"
-                                    id="addDomainDesc"
-                                    >Add a new domain to whitelist</span
                                 >
                             </div>
                             <div class="input-with-button">

@@ -132,23 +132,18 @@
 
         document.getElementById("optionsTitle").textContent =
             getText("optionsTitle")
-        document.getElementById("optionsSubtitle").textContent =
-            getText("optionsSubtitle")
         document.getElementById("appearanceHeading").textContent =
             getText("appearanceHeading")
         document.getElementById("themeLabel").textContent =
             getText("themeLabel")
-        document.getElementById("themeDesc").textContent = getText("themeDesc")
-        document.getElementById("themeLightText").textContent =
-            getText("themeLightText")
-        document.getElementById("themeDarkText").textContent =
-            getText("themeDarkText")
-        document.getElementById("themeAutoText").textContent =
-            getText("themeAutoText")
+        for (const theme of ["Light", "Dark", "Auto"]) {
+            const btn = document.getElementById(`theme${theme}Btn`)
+            const label = getText(`theme${theme}Text`)
+            btn.title = label
+            btn.setAttribute("aria-label", label)
+        }
         document.getElementById("languageLabel").textContent =
             getText("languageLabel")
-        document.getElementById("languageDesc").textContent =
-            getText("languageDesc")
         document.getElementById("linkBehaviorHeading").textContent =
             getText("linkBehaviorHeading")
         document.getElementById("openInBackgroundLabel").textContent =
@@ -169,16 +164,12 @@
             getText("whitelistHeading")
         document.getElementById("importExportLabel").textContent =
             getText("importExportLabel")
-        document.getElementById("importExportDesc").textContent =
-            getText("importExportDesc")
         document.getElementById("exportBtnText").textContent =
             getText("exportBtnText")
         document.getElementById("importBtnText").textContent =
             getText("importBtnText")
         document.getElementById("addDomainLabel").textContent =
             getText("addDomainLabel")
-        document.getElementById("addDomainDesc").textContent =
-            getText("addDomainDesc")
         document.getElementById("addBtnText").textContent =
             getText("addBtnText")
         document.getElementById("footerText").textContent = getText(
