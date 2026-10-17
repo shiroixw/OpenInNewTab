@@ -71,6 +71,8 @@ body {
     justify-content: space-between;
     align-items: center;
     gap: 16px;
+    /* Anchor for .setting-hint-tooltip (from popup.css) */
+    position: relative;
 }
 
 .theme-option {
@@ -98,6 +100,14 @@ body {
     display: block;
     font-size: 13px;
     color: var(--text-secondary);
+}
+
+/* Title + hint icon on one line (tooltip styles come from popup.css).
+   1px bottom margin grows the flex line to 22px, so the stretched hint icon
+   centers 0.5px below the title's box — matching where CJK ink actually sits
+   (the system font's ascent/descent are asymmetric). */
+.setting-copy .setting-title {
+    margin-bottom: 1px;
 }
 
 /* Button Group */
