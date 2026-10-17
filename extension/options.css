@@ -31,12 +31,6 @@ body {
     font-size: 28px;
     font-weight: 700;
     color: var(--text-primary);
-    margin: 0 0 8px 0;
-}
-
-.subtitle {
-    font-size: 14px;
-    color: var(--text-secondary);
     margin: 0;
 }
 
