@@ -85,6 +85,10 @@ The format follows [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/
 - Visited-link marks are no longer discarded when "Open in background" is
   enabled. Background mode only needs to drop the `target="_blank"` patches; the
   two features are independent.
+- Theming no longer depends on matching an inline `style="color-scheme: …"`
+  string. A shared `theme.js` resolves the preference once and publishes it as
+  `data-color-scheme` on `<body>`, which popup.css selects on; `auto` also
+  follows OS changes live instead of only on the next page open.
 
 ### [1.7.3] — 2026-10-23
 
@@ -105,10 +109,6 @@ The format follows [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/
 - Importing a whitelist file validates and de-duplicates every entry, reports how
   many were added or skipped, and merges into the existing list instead of
   replacing it — a malformed or partial file can no longer wipe the whitelist.
-- Theming no longer depends on matching an inline `style="color-scheme: …"`
-  string. A shared `theme.js` resolves the preference once and publishes it as
-  `data-color-scheme` on `<body>`, which popup.css selects on; `auto` also
-  follows OS changes live instead of only on the next page open.
 
 ### [1.7.2] — 2026-10-16
 
