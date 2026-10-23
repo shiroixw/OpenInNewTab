@@ -147,6 +147,21 @@ The extension supports both exact domain matching and subdomain matching:
 -   `example.com` matches `example.com` exactly
 -   `example.com` also matches `sub.example.com`, `deep.sub.example.com`, etc.
 
+### Pages the browser protects
+
+Chrome refuses to run content scripts on some pages, and no permission can
+change that. On those pages the extension is genuinely inactive, so the popup
+disables quick-add and explains why instead of storing an entry that would never
+apply:
+
+-   The Chrome Web Store — the whole of `chrome.google.com` (listing pages and
+    the developer console alike) and `chromewebstore.google.com`
+-   Browser-internal pages (`chrome://…`, `about:…`, `view-source:…`)
+-   Other extensions' pages (`chrome-extension://…`)
+
+Links on those pages open exactly as the site intends, in the same tab. The
+rest of the web is unaffected.
+
 ## How It Works
 
 1. **Initialization**: Extension loads and registers content scripts

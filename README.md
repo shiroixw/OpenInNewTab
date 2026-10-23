@@ -19,6 +19,7 @@ The whitelist-based approach means:
 2. **You control which sites to modify** - Add specific domains (e.g., github.com, reddit.com) to your whitelist
 3. **Links open in new tabs only on whitelisted sites** - Only the websites you add will have their links modified
 4. **Easy to manage** - Add or remove domains anytime through the popup interface or menu commands
+5. **Some pages stay out of reach** - Chrome blocks extensions on the Web Store and browser-internal pages; the extension stays silent there and the popup explains why
 
 **Example**: If you add `github.com` to your whitelist, all links on GitHub will open in new tabs. Other websites like Google, Twitter, etc., will remain unchanged unless you also add them to the whitelist.
 
