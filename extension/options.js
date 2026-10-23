@@ -10,6 +10,24 @@
     const i18n = window.I18n
     let currentLanguage = i18n.DEFAULT_LOCALE
 
+    /**
+     * Whitelist policy — the exact module the content script matches with, so
+     * entries added here can never disagree with what the page does.
+     */
+    const policyReady = import(chrome.runtime.getURL("link-policy.js"))
+    /** @type {typeof import("./link-policy.js") | null} */
+    let policy = null
+
+    /**
+     * @returns {Promise<typeof import("./link-policy.js")>}
+     */
+    async function getPolicy() {
+        if (!policy) {
+            policy = await policyReady
+        }
+        return policy
+    }
+
     let currentTheme = "auto"
 
     /**
@@ -286,21 +304,42 @@
     }
 
     /**
-     * Add domain to whitelist
+     * Add a domain to the whitelist.
+     *
+     * Manual input goes through the same canonicalizer as imported data, so
+     * `https://GitHub.com/x` becomes `github.com` instead of a row that never
+     * matches. Entries already covered by a parent domain are reported, not
+     * duplicated.
      * @param {string} domain Domain to add
      */
     async function addDomainToWhitelist(domain) {
         try {
-            const userWhitelist = await getUserWhitelist()
+            const { normalizeDomain, findCoveringDomain, mergeWhitelist } =
+                await getPolicy()
+            const normalized = normalizeDomain(domain)
 
-            if (!userWhitelist.includes(domain)) {
-                userWhitelist.push(domain)
-                await saveUserWhitelist(userWhitelist)
-                showNotification(`${domain} ${getText("addedToWhitelist")}`)
-                loadWhitelist()
-            } else {
-                showNotification(`${domain} ${getText("alreadyInWhitelist")}`)
+            if (!normalized) {
+                showNotification(getText("invalidDomain", { domain }))
+                return
             }
+
+            const userWhitelist = await getUserWhitelist()
+            const covering = findCoveringDomain(normalized, userWhitelist)
+
+            if (covering) {
+                showNotification(
+                    getText("domainAlreadyCovered", {
+                        domain: normalized,
+                        parent: covering,
+                    })
+                )
+                return
+            }
+
+            const { domains } = mergeWhitelist(userWhitelist, [normalized])
+            await saveUserWhitelist(domains)
+            showNotification(`${normalized} ${getText("addedToWhitelist")}`)
+            await loadWhitelist()
         } catch (error) {
             console.error("Error adding domain:", error)
             showNotification(getText("errorAddingDomain"))
@@ -308,20 +347,28 @@
     }
 
     /**
-     * Remove domain from whitelist
+     * Remove one whitelist row.
      * @param {string} domain Domain to remove
      */
     async function removeDomainFromWhitelist(domain) {
         try {
+            const { normalizeDomain } = await getPolicy()
+            const target = normalizeDomain(domain) || domain
             const userWhitelist = await getUserWhitelist()
-            const index = userWhitelist.indexOf(domain)
+            const index = userWhitelist.findIndex(
+                (entry) =>
+                    typeof entry === "string" &&
+                    (normalizeDomain(entry) || entry) === target
+            )
 
-            if (index > -1) {
-                userWhitelist.splice(index, 1)
-                await saveUserWhitelist(userWhitelist)
-                showNotification(`${domain} ${getText("removedFromWhitelist")}`)
-                loadWhitelist()
+            if (index === -1) {
+                return
             }
+
+            userWhitelist.splice(index, 1)
+            await saveUserWhitelist(userWhitelist)
+            showNotification(`${target} ${getText("removedFromWhitelist")}`)
+            await loadWhitelist()
         } catch (error) {
             console.error("Error removing domain:", error)
             showNotification(getText("errorRemovingDomain"))
@@ -427,25 +474,73 @@
     }
 
     /**
-     * Import whitelist from JSON file
+     * Import a whitelist JSON file.
+     *
+     * Entries are canonicalized and validated before they reach storage, and the
+     * import merges into the existing list instead of replacing it — a malformed
+     * or partial file can no longer silently wipe what the user already had.
      * @param {File} file JSON file to import
      */
     async function importWhitelist(file) {
         try {
+            const { mergeWhitelist } = await getPolicy()
             const text = await file.text()
             const data = JSON.parse(text)
+            const incoming = Array.isArray(data?.whitelist)
+                ? data.whitelist
+                : Array.isArray(data)
+                  ? data
+                  : null
 
-            if (data.whitelist && Array.isArray(data.whitelist)) {
-                await saveUserWhitelist(data.whitelist)
-                showNotification(getText("importSuccess"))
-                loadWhitelist()
-            } else {
+            if (!incoming || incoming.length === 0) {
                 showNotification(getText("importError"))
+                return
             }
+
+            const userWhitelist = await getUserWhitelist()
+            const { domains, added, duplicate, invalid } = mergeWhitelist(
+                userWhitelist,
+                incoming
+            )
+
+            if (added === 0) {
+                showNotification(
+                    getText("importNothingAdded", { duplicate, invalid })
+                )
+                return
+            }
+
+            await saveUserWhitelist(domains)
+            showNotification(
+                getText("importSummary", {
+                    added,
+                    skipped: duplicate + invalid,
+                })
+            )
+            await loadWhitelist()
         } catch (error) {
             console.error("Error importing whitelist:", error)
             showNotification(getText("importError"))
         }
+    }
+
+    /**
+     * Repair legacy entries (scheme, mixed case, duplicates, junk) in storage
+     * once, so the rendered list matches what the content script matches.
+     * @returns {Promise<string[]>} The canonical list.
+     */
+    async function sanitizeStoredWhitelist() {
+        const { sanitizeWhitelist } = await getPolicy()
+        const stored = await getUserWhitelist()
+        const { domains, changed } = sanitizeWhitelist(stored)
+        if (changed) {
+            try {
+                await saveUserWhitelist(domains)
+            } catch (error) {
+                console.error("Error repairing whitelist:", error)
+            }
+        }
+        return domains
     }
 
     /**
@@ -521,6 +616,7 @@
                 }
             })
 
+            await sanitizeStoredWhitelist()
             await loadWhitelist()
         } catch (error) {
             console.error("Error initializing options:", error)

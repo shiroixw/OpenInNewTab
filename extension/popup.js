@@ -10,6 +10,26 @@
     const i18n = window.I18n
     let currentLanguage = i18n.DEFAULT_LOCALE
 
+    /**
+     * Whitelist policy — the exact module the content script matches with, so
+     * adding/removing entries here can never disagree with what the page does.
+     * Classic scripts cannot import statically; one shared promise keeps it to
+     * a single fetch per popup.
+     */
+    const policyReady = import(chrome.runtime.getURL("link-policy.js"))
+    /** @type {typeof import("./link-policy.js") | null} */
+    let policy = null
+
+    /**
+     * @returns {Promise<typeof import("./link-policy.js")>}
+     */
+    async function getPolicy() {
+        if (!policy) {
+            policy = await policyReady
+        }
+        return policy
+    }
+
     let currentDomain = ""
 
     let currentTheme = "auto"
@@ -230,14 +250,20 @@
     }
 
     /**
-     * Update quick add button state
+     * Update quick add button state.
+     *
+     * Uses `isHostAllowed` rather than an exact array lookup: the content script
+     * treats a parent entry (`github.com`) as covering every subdomain, so a
+     * strict `includes` here would offer "Add" on a page that is already
+     * intercepted.
      */
     async function updateQuickAddButton() {
         const quickAddBtn = document.getElementById("quickAddBtn")
         const quickAddBtnText = document.getElementById("quickAddBtnText")
         const userWhitelist = await getUserWhitelist()
+        const { isHostAllowed } = await getPolicy()
 
-        if (currentDomain && userWhitelist.includes(currentDomain)) {
+        if (currentDomain && isHostAllowed(currentDomain, userWhitelist)) {
             quickAddBtn.classList.add("remove-state")
             quickAddBtn.classList.remove("added")
             quickAddBtn.disabled = false
@@ -278,14 +304,34 @@
             return
         }
 
+        const { isHostAllowed } = await getPolicy()
         const userWhitelist = await getUserWhitelist()
 
-        if (userWhitelist.includes(currentDomain)) {
-            await removeDomainFromWhitelist(currentDomain)
+        if (isHostAllowed(currentDomain, userWhitelist)) {
+            await removeCurrentDomain()
             return
         }
 
         await addDomainToWhitelist(currentDomain)
+    }
+
+    /**
+     * Repair legacy entries (scheme, mixed case, duplicates, junk) in storage
+     * once, so matching, the list and the quick-add state agree from then on.
+     * @returns {Promise<string[]>} The canonical list.
+     */
+    async function sanitizeStoredWhitelist() {
+        const { sanitizeWhitelist } = await getPolicy()
+        const stored = await getUserWhitelist()
+        const { domains, changed } = sanitizeWhitelist(stored)
+        if (changed) {
+            try {
+                await saveUserWhitelist(domains)
+            } catch (error) {
+                console.error("Error repairing whitelist:", error)
+            }
+        }
+        return domains
     }
 
     /**
@@ -371,24 +417,42 @@
     }
 
     /**
-     * Add domain to whitelist
+     * Add a domain to the whitelist.
+     *
+     * The entry is canonicalized first and rejected when it is not a hostname or
+     * already covered by a parent entry — storing either would create a row that
+     * never matches anything on its own.
      * @param {string} domain Domain to add
      */
     async function addDomainToWhitelist(domain) {
         try {
-            const userWhitelist = await getUserWhitelist()
+            const { normalizeDomain, findCoveringDomain, mergeWhitelist } =
+                await getPolicy()
+            const normalized = normalizeDomain(domain)
 
-            if (!userWhitelist.includes(domain)) {
-                userWhitelist.push(domain)
-                await saveUserWhitelist(userWhitelist)
-                showNotification(`${domain} ${getText("addedToWhitelist")}`)
-                loadWhitelist()
-                if (domain === currentDomain) {
-                    await updateQuickAddButton()
-                }
-            } else {
-                showNotification(`${domain} ${getText("alreadyInWhitelist")}`)
+            if (!normalized) {
+                showNotification(getText("invalidDomain", { domain }))
+                return
             }
+
+            const userWhitelist = await getUserWhitelist()
+            const covering = findCoveringDomain(normalized, userWhitelist)
+
+            if (covering) {
+                showNotification(
+                    getText("domainAlreadyCovered", {
+                        domain: normalized,
+                        parent: covering,
+                    })
+                )
+                return
+            }
+
+            const { domains } = mergeWhitelist(userWhitelist, [normalized])
+            await saveUserWhitelist(domains)
+            showNotification(`${normalized} ${getText("addedToWhitelist")}`)
+            await loadWhitelist()
+            await updateQuickAddButton()
         } catch (error) {
             console.error("Error adding domain:", error)
             showNotification(getText("errorAddingDomain"))
@@ -396,25 +460,62 @@
     }
 
     /**
-     * Remove domain from whitelist
+     * Remove one whitelist row (the list's own Remove button).
      * @param {string} domain Domain to remove
      */
     async function removeDomainFromWhitelist(domain) {
         try {
+            const { normalizeDomain } = await getPolicy()
+            const target = normalizeDomain(domain) || domain
             const userWhitelist = await getUserWhitelist()
-            const index = userWhitelist.indexOf(domain)
+            const index = userWhitelist.findIndex(
+                (entry) =>
+                    typeof entry === "string" &&
+                    (normalizeDomain(entry) || entry) === target
+            )
 
-            if (index > -1) {
-                userWhitelist.splice(index, 1)
-                await saveUserWhitelist(userWhitelist)
-                showNotification(`${domain} ${getText("removedFromWhitelist")}`)
-                loadWhitelist()
-                if (domain === currentDomain) {
-                    await updateQuickAddButton()
-                }
+            if (index === -1) {
+                return
             }
+
+            userWhitelist.splice(index, 1)
+            await saveUserWhitelist(userWhitelist)
+            showNotification(`${target} ${getText("removedFromWhitelist")}`)
+            await loadWhitelist()
+            await updateQuickAddButton()
         } catch (error) {
             console.error("Error removing domain:", error)
+            showNotification(getText("errorRemovingDomain"))
+        }
+    }
+
+    /**
+     * Remove the current host from the whitelist, including a parent entry that
+     * covers it — otherwise "Remove" on `gist.github.com` would be a no-op while
+     * `github.com` keeps intercepting the page.
+     */
+    async function removeCurrentDomain() {
+        try {
+            const { removeHostFromWhitelist } = await getPolicy()
+            const userWhitelist = await getUserWhitelist()
+            const { domains, removed } = removeHostFromWhitelist(
+                userWhitelist,
+                currentDomain
+            )
+
+            if (removed.length === 0) {
+                showNotification(getText("alreadyNotInWhitelist"))
+                return
+            }
+
+            await saveUserWhitelist(domains)
+            showNotification(
+                `${removed.join(", ")} ${getText("removedFromWhitelist")}`
+            )
+            await loadWhitelist()
+            await updateQuickAddButton()
+        } catch (error) {
+            console.error("Error removing current domain:", error)
             showNotification(getText("errorRemovingDomain"))
         }
     }
@@ -584,6 +685,10 @@
             const quickAddBtn = document.getElementById("quickAddBtn")
 
             quickAddBtn.addEventListener("click", handleQuickAdd)
+
+            // Repair legacy entries before rendering, so the list and the
+            // quick-add state reflect what the content script will match.
+            await sanitizeStoredWhitelist()
 
             // Load initial whitelist
             await loadWhitelist()
