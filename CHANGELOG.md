@@ -72,6 +72,16 @@ The format follows [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/
 
 ## Extension
 
+### [Unreleased]
+
+#### Fixed
+- The popup no longer offers to whitelist a page the browser protects. Chrome
+  never injects content scripts on the Web Store (`chrome.google.com` — listing
+  pages and the developer console alike — and `chromewebstore.google.com`), on
+  `chrome://` internals or on other extensions' pages, so such an entry could
+  never take effect. Quick-add is now disabled there and the reason is shown
+  inline. Reported against the Web Store developer console.
+
 ### [1.7.3] — 2026-10-23
 
 #### Fixed

@@ -253,8 +253,26 @@ body {
     background: color-mix(in srgb, var(--text-primary) 8%, transparent);
 }
 
+/* Protected page: the action cannot ever take effect, so the button reads as
+   unavailable instead of inviting a click that does nothing. Declared after
+   :hover so the static look wins in the disabled state. */
+.quick-add-btn:disabled {
+    background: transparent;
+    color: var(--text-secondary);
+    border: 1px solid var(--border-color);
+    cursor: not-allowed;
+}
+
 .quick-add-btn #quickAddBtnText {
     font-size: 13px;
+}
+
+/* Why quick-add is unavailable — a disabled button cannot show a tooltip. */
+.domain-hint {
+    margin: 8px 2px 0;
+    font-size: 12px;
+    line-height: 1.5;
+    color: var(--text-secondary);
 }
 
 /* Section Title */
