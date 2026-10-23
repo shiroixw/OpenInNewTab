@@ -72,6 +72,20 @@ The format follows [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/
 
 ## Extension
 
+### [1.7.4] — 2026-10-23
+
+#### Added
+- **Mark visited links** is now a setting (Settings → Link behavior) instead of
+  always-on behaviour. Forcing the browser's visited colour overrode each site's
+  own link styling, which reads as a bug on sites with static menus (see #26).
+  The preference defaults to on, so existing installs behave exactly as before;
+  turning it off also stops recording the URLs you open. Fixes #26.
+
+#### Fixed
+- Visited-link marks are no longer discarded when "Open in background" is
+  enabled. Background mode only needs to drop the `target="_blank"` patches; the
+  two features are independent.
+
 ### [1.7.3] — 2026-10-23
 
 #### Fixed
