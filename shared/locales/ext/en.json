@@ -4,6 +4,8 @@
     "quickAddBtnText": "Add",
     "quickAddBtnRemove": "Remove",
     "quickAddBtnAddTitle": "Add current domain to whitelist",
+    "quickAddUnavailable": "Unavailable",
+    "restrictedPageHint": "Chrome blocks extensions on this page (Web Store and browser-internal pages), so whitelisting it would have no effect.",
     "quickAddBtnRemoveTitle": "Remove current domain from whitelist",
     "whitelistTitle": "Whitelist",
     "removeButton": "Remove",

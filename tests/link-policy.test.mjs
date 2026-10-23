@@ -3,6 +3,7 @@ import { describe, it } from "node:test"
 import {
     findCoveringDomain,
     isHostAllowed,
+    isRestrictedUrl,
     mergeWhitelist,
     normalizeDomain,
     removeHostFromWhitelist,
@@ -23,6 +24,55 @@ describe("isHostAllowed", () => {
         assert.equal(isHostAllowed("github.com", list), true)
         assert.equal(isHostAllowed("gist.github.com", list), true)
         assert.equal(isHostAllowed("notgithub.com", list), false)
+    })
+})
+
+describe("isRestrictedUrl", () => {
+    // Chrome refuses content scripts on these origins, so no whitelist entry
+    // can take effect there; the popup disables quick-add instead.
+    it("flags the Web Store origins, whole host not just /webstore", () => {
+        assert.equal(
+            isRestrictedUrl(
+                "https://chrome.google.com/webstore/devconsole/f7f8a757/edit"
+            ),
+            true
+        )
+        assert.equal(isRestrictedUrl("https://chrome.google.com/robots.txt"), true)
+        assert.equal(
+            isRestrictedUrl("https://chromewebstore.google.com/detail/abc"),
+            true
+        )
+    })
+
+    it("flags browser-internal and other-extension schemes", () => {
+        for (const url of [
+            "chrome://extensions/",
+            "chrome://newtab/",
+            "chrome-extension://kjhbpoaepnfmchijkgihciehjggpbech/options.html",
+            "devtools://devtools/bundled/inspector.html",
+            "view-source:https://example.com",
+            "about:blank",
+        ]) {
+            assert.equal(isRestrictedUrl(url), true, `expected restricted: ${url}`)
+        }
+    })
+
+    it("leaves ordinary and look-alike hosts alone", () => {
+        for (const url of [
+            "https://github.com/shiroixw/OpenInNewTab",
+            "https://www.google.com/webstore",
+            "https://chrome.google.com.example.com/webstore",
+            "http://localhost:8080/",
+        ]) {
+            assert.equal(isRestrictedUrl(url), false, `expected allowed: ${url}`)
+        }
+    })
+
+    it("accepts a URL object and treats empty or unparseable input as allowed", () => {
+        assert.equal(isRestrictedUrl(new URL("https://chrome.google.com/")), true)
+        for (const value of [null, undefined, "", "not a url"]) {
+            assert.equal(isRestrictedUrl(value), false)
+        }
     })
 })
 

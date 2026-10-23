@@ -81,6 +81,59 @@ export function isHostAllowed(hostname, whitelist) {
 }
 
 /**
+ * Schemes of documents the browser never lets an extension script: internal
+ * pages, other extensions' pages, and the viewer wrappers it serves for them.
+ */
+const RESTRICTED_SCHEMES = new Set([
+    "about:",
+    "chrome:",
+    "chrome-untrusted:",
+    "chrome-extension:",
+    "devtools:",
+    "edge:",
+    "view-source:",
+])
+
+/**
+ * Hosts whose pages the browser owns end to end. Chrome refuses content
+ * scripts on the whole host, not just the `/webstore` path — verified against
+ * the developer console (`chrome.google.com/webstore/devconsole/…`), its plain
+ * documents, and the newer `chromewebstore.google.com` origin.
+ */
+const RESTRICTED_HOSTS = new Set([
+    "chrome.google.com",
+    "chromewebstore.google.com",
+])
+
+/**
+ * Whether the browser protects this URL from content scripts.
+ *
+ * Nothing a user stores can change this: no whitelist entry makes the content
+ * script run there, so the UI has to say so instead of offering an entry that
+ * silently never applies. Unparseable input counts as unprotected — a false
+ * "restricted" verdict would disable the extension on a real site, which is
+ * the worse mistake.
+ * @param {string|URL|null|undefined} url
+ * @returns {boolean}
+ */
+export function isRestrictedUrl(url) {
+    if (!url) {
+        return false
+    }
+    /** @type {URL} */
+    let parsed
+    try {
+        parsed = url instanceof URL ? url : new URL(String(url))
+    } catch {
+        return false
+    }
+    if (RESTRICTED_SCHEMES.has(parsed.protocol)) {
+        return true
+    }
+    return RESTRICTED_HOSTS.has(parsed.hostname.toLowerCase())
+}
+
+/**
  * Most specific entry covering `hostname` — the one to name in a "already
  * covered by …" hint. `null` when the host is not whitelisted.
  * @param {string} hostname

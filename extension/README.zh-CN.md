@@ -137,6 +137,16 @@
 -   `example.com` 精确匹配 `example.com`
 -   `example.com` 也匹配 `sub.example.com`、`deep.sub.example.com` 等
 
+### 浏览器保护的页面
+
+Chrome 会拒绝在部分页面上运行内容脚本，任何权限都无法改变这一点。在这些页面上扩展本就不生效，弹窗因此会禁用快速添加并说明原因，而不是存下一条永远不会生效的记录：
+
+-   Chrome 应用商店——整个 `chrome.google.com`（商店列表页与开发者信息中心一样）以及 `chromewebstore.google.com`
+-   浏览器内置页面（`chrome://…`、`about:…`、`view-source:…`）
+-   其他扩展的页面（`chrome-extension://…`）
+
+这些页面上的链接会按网站原本的方式在当前标签页打开，其余网站不受影响。
+
 ## 工作原理
 
 1. **初始化**：扩展加载并注册内容脚本

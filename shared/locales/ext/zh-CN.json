@@ -4,6 +4,8 @@
     "quickAddBtnText": "添加",
     "quickAddBtnRemove": "移除",
     "quickAddBtnAddTitle": "将当前域名添加到白名单",
+    "quickAddUnavailable": "不可用",
+    "restrictedPageHint": "Chrome 禁止扩展在应用商店与浏览器内置页面上运行，加入白名单不会生效。",
     "quickAddBtnRemoveTitle": "将当前域名从白名单移除",
     "whitelistTitle": "白名单",
     "removeButton": "移除",

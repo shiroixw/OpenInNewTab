@@ -4,6 +4,8 @@
     "quickAddBtnText": "加入",
     "quickAddBtnRemove": "移除",
     "quickAddBtnAddTitle": "將目前網域加入白名單",
+    "quickAddUnavailable": "無法使用",
+    "restrictedPageHint": "Chrome 禁止擴充功能在應用程式商店與瀏覽器內建頁面上執行，加入白名單不會生效。",
     "quickAddBtnRemoveTitle": "將目前網域從白名單移除",
     "whitelistTitle": "白名單",
     "removeButton": "移除",
