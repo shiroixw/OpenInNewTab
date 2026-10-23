@@ -113,10 +113,12 @@ describe("extension visited-link marking", () => {
         assert.match(contentScript, /function syncVisitedMarks\(\)/)
     })
 
-    it("does not patch same-document hash-only anchors with target=_blank", () => {
+    it("does not patch non-interceptable anchors with target=_blank", () => {
+        // Same-document hashes must stay in-page; the predicate is now shared
+        // with the click handler through linkUrl().
         const patch = functionBody(contentScript, "patchLinkTarget")
         assert.ok(patch, "content.js defines patchLinkTarget")
-        assert.match(patch, /shouldSkipHref\(link\.getAttribute\("href"\)\)/)
+        assert.match(patch, /!linkUrl\(link\)/)
     })
 
     it("exposes the preference on the options page", () => {
