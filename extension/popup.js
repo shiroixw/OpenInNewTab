@@ -66,18 +66,7 @@
      * @param {string} theme Theme to apply ('light', 'dark', or 'auto')
      */
     function applyTheme(theme) {
-        const body = document.body
-
-        if (theme === "auto") {
-            // Use system preference
-            const prefersDark = window.matchMedia(
-                "(prefers-color-scheme: dark)"
-            ).matches
-            body.style.colorScheme = prefersDark ? "dark" : "light"
-        } else {
-            // Use manual theme
-            body.style.colorScheme = theme
-        }
+        window.OINTTheme.apply(theme)
 
         // Update active state of theme buttons
         document.querySelectorAll(".theme-option").forEach((btn) => {
@@ -674,6 +663,11 @@
             // Load and apply theme preference
             currentTheme = await getThemePreference()
             applyTheme(currentTheme)
+            window.OINTTheme.watchSystem(() => {
+                if (currentTheme === "auto") {
+                    applyTheme("auto")
+                }
+            })
 
             // Load and apply language preference
             await updateLanguage()
