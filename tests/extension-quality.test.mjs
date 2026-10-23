@@ -91,6 +91,33 @@ describe("extension quality contracts", () => {
         }
     })
 
+    it("whitelist writes go through the shared host policy", () => {
+        // The UI used to push raw input and compare with `Array.includes`, which
+        // disagreed with the content script's subdomain matching. Both pages must
+        // canonicalize before writing and ask the policy whether a host is
+        // already covered.
+        for (const [label, source] of [
+            ["popup.js", popupScript],
+            ["options.js", optionsScript],
+        ]) {
+            assert.match(
+                source,
+                /normalizeDomain/,
+                `${label} must canonicalize user input`
+            )
+            assert.doesNotMatch(
+                source,
+                /whitelist\.push\(/,
+                `${label} must merge through the policy, not push raw entries`
+            )
+        }
+        assert.match(
+            popupScript,
+            /isHostAllowed/,
+            "popup.js must use the shared host policy for the quick-add state"
+        )
+    })
+
     it("content script probes the runtime before preventing the default", () => {
         // A content script outlives an extension reload/update. Once its context
         // is invalidated, chrome.runtime throws and the service worker is gone —

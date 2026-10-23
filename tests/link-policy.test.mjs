@@ -1,7 +1,12 @@
 import assert from "node:assert/strict"
 import { describe, it } from "node:test"
 import {
+    findCoveringDomain,
     isHostAllowed,
+    mergeWhitelist,
+    normalizeDomain,
+    removeHostFromWhitelist,
+    sanitizeWhitelist,
     shouldSkipClick,
     shouldSkipHref,
 } from "../extension/link-policy.js"
@@ -60,5 +65,112 @@ describe("shouldSkipClick", () => {
         assert.equal(shouldSkipClick(click({ shiftKey: true }), anchor()), true)
         assert.equal(shouldSkipClick(click({ button: 1 }), anchor()), true)
         assert.equal(shouldSkipClick(click(), anchor()), false)
+    })
+})
+
+describe("normalizeDomain", () => {
+    it("reduces URLs, ports, trailing dots and case to a bare hostname", () => {
+        assert.equal(normalizeDomain("https://GitHub.com/settings"), "github.com")
+        assert.equal(normalizeDomain("http://github.com:8080/x"), "github.com")
+        assert.equal(normalizeDomain("  GitHub.com.  "), "github.com")
+        assert.equal(normalizeDomain("gist.github.com"), "gist.github.com")
+    })
+
+    it("keeps single-label hosts and IPs, punycodes IDNs", () => {
+        assert.equal(normalizeDomain("localhost"), "localhost")
+        assert.equal(normalizeDomain("192.168.1.10"), "192.168.1.10")
+        assert.equal(normalizeDomain("例子.测试"), "xn--fsqu00a.xn--0zwm56d")
+    })
+
+    it("rejects values that can never match a hostname", () => {
+        for (const raw of [
+            "",
+            "   ",
+            null,
+            42,
+            "https://",
+            "*.github.com",
+            "exa mple.com",
+            "-bad.com",
+            "foo_bar.com",
+            "a".repeat(64) + ".com",
+        ]) {
+            assert.equal(normalizeDomain(raw), null, `expected null for ${raw}`)
+        }
+    })
+})
+
+describe("sanitizeWhitelist", () => {
+    it("canonicalizes, de-duplicates and reports whether it changed", () => {
+        const { domains, changed } = sanitizeWhitelist([
+            "HTTPS://GitHub.com/a",
+            "github.com",
+            "",
+            42,
+            "example.com",
+        ])
+        assert.deepEqual(domains, ["github.com", "example.com"])
+        assert.equal(changed, true)
+    })
+
+    it("leaves an already-canonical list untouched", () => {
+        const { domains, changed } = sanitizeWhitelist(["github.com", "a.io"])
+        assert.deepEqual(domains, ["github.com", "a.io"])
+        assert.equal(changed, false)
+    })
+
+    it("treats a non-array value as an empty list", () => {
+        assert.deepEqual(sanitizeWhitelist(undefined), {
+            domains: [],
+            changed: true,
+        })
+    })
+})
+
+describe("mergeWhitelist", () => {
+    it("adds only new, valid, non-covered entries", () => {
+        const { domains, added, duplicate, invalid } = mergeWhitelist(
+            ["github.com"],
+            ["https://GitHub.com/x", "gist.github.com", "example.com", "bad host"]
+        )
+        assert.deepEqual(domains, ["github.com", "example.com"])
+        assert.equal(added, 1)
+        assert.equal(duplicate, 2)
+        assert.equal(invalid, 1)
+    })
+
+    it("does not mutate the input list", () => {
+        const existing = ["github.com"]
+        mergeWhitelist(existing, ["example.com"])
+        assert.deepEqual(existing, ["github.com"])
+    })
+})
+
+describe("findCoveringDomain", () => {
+    it("returns the most specific entry covering the host", () => {
+        const list = ["github.com", "gist.github.com"]
+        assert.equal(findCoveringDomain("gist.github.com", list), "gist.github.com")
+        assert.equal(findCoveringDomain("github.com", list), "github.com")
+        assert.equal(findCoveringDomain("example.com", list), null)
+    })
+})
+
+describe("removeHostFromWhitelist", () => {
+    it("removes a parent entry that covers the host", () => {
+        const { domains, removed } = removeHostFromWhitelist(
+            ["github.com", "example.com"],
+            "gist.github.com"
+        )
+        assert.deepEqual(removed, ["github.com"])
+        assert.deepEqual(domains, ["example.com"])
+    })
+
+    it("reports nothing removed when the host is not whitelisted", () => {
+        const { domains, removed } = removeHostFromWhitelist(
+            ["example.com"],
+            "github.com"
+        )
+        assert.deepEqual(removed, [])
+        assert.deepEqual(domains, ["example.com"])
     })
 })

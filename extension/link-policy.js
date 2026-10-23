@@ -4,6 +4,64 @@
  * No DOM writes, no chrome APIs.
  */
 
+/** Longest legal DNS name, in characters. */
+const MAX_DOMAIN_LENGTH = 253
+
+/** One DNS label: alphanumeric, inner hyphens, 1–63 chars. */
+const DOMAIN_LABEL_RE = /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/
+
+const SCHEME_RE = /^[a-z][a-z0-9+.-]*:\/\//i
+
+/**
+ * Canonicalize one whitelist entry into a bare lowercase hostname.
+ *
+ * Accepts what users actually paste — `https://GitHub.com/settings`, a host
+ * with a port, a trailing dot — and returns `null` for anything that cannot be
+ * a hostname, so callers can reject the entry instead of storing a value that
+ * will never match. IDNs are punycoded by `URL`, matching `location.hostname`.
+ * @param {unknown} raw
+ * @returns {string|null}
+ */
+export function normalizeDomain(raw) {
+    if (typeof raw !== "string") {
+        return null
+    }
+    const trimmed = raw.trim()
+    // Whitespace and wildcards have no meaning for our matcher.
+    if (!trimmed || /\s/.test(trimmed) || trimmed.includes("*")) {
+        return null
+    }
+
+    let hostname
+    try {
+        const url = new URL(
+            SCHEME_RE.test(trimmed) ? trimmed : "http://" + trimmed
+        )
+        hostname = url.hostname
+    } catch {
+        return null
+    }
+
+    hostname = hostname.toLowerCase().replace(/\.$/, "")
+    if (!hostname || hostname.length > MAX_DOMAIN_LENGTH) {
+        return null
+    }
+    if (!hostname.split(".").every((label) => DOMAIN_LABEL_RE.test(label))) {
+        return null
+    }
+    return hostname
+}
+
+/**
+ * Whether one stored entry covers `hostname` (exact host or parent domain).
+ * @param {string} host
+ * @param {string} entry
+ * @returns {boolean}
+ */
+function entryCovers(host, entry) {
+    return host === entry || host.endsWith("." + entry)
+}
+
 /**
  * @param {string} hostname
  * @param {unknown} whitelist
@@ -13,14 +71,136 @@ export function isHostAllowed(hostname, whitelist) {
     if (!hostname || !Array.isArray(whitelist)) {
         return false
     }
-    const host = hostname.toLowerCase()
+    const host = String(hostname).toLowerCase()
     return whitelist.some((entry) => {
         if (typeof entry !== "string" || !entry) {
             return false
         }
-        const domain = entry.toLowerCase()
-        return host === domain || host.endsWith("." + domain)
+        return entryCovers(host, entry.toLowerCase())
     })
+}
+
+/**
+ * Most specific entry covering `hostname` — the one to name in a "already
+ * covered by …" hint. `null` when the host is not whitelisted.
+ * @param {string} hostname
+ * @param {unknown} whitelist
+ * @returns {string|null}
+ */
+export function findCoveringDomain(hostname, whitelist) {
+    if (!hostname || !Array.isArray(whitelist)) {
+        return null
+    }
+    const host = String(hostname).toLowerCase()
+    /** @type {string|null} */
+    let best = null
+    for (const entry of whitelist) {
+        if (typeof entry !== "string" || !entry) {
+            continue
+        }
+        if (!entryCovers(host, entry.toLowerCase())) {
+            continue
+        }
+        if (!best || entry.length > best.length) {
+            best = entry
+        }
+    }
+    return best
+}
+
+/**
+ * Normalize and de-duplicate a stored list, preserving order.
+ *
+ * `changed` tells the caller whether the canonical form differs from what is
+ * stored, so legacy entries (scheme, mixed case, duplicates, junk) can be
+ * repaired once instead of silently never matching.
+ * @param {unknown} value
+ * @returns {{ domains: string[], changed: boolean }}
+ */
+export function sanitizeWhitelist(value) {
+    const list = Array.isArray(value) ? value : []
+    /** @type {string[]} */
+    const domains = []
+    const seen = new Set()
+    let changed = !Array.isArray(value)
+
+    for (const entry of list) {
+        const domain = normalizeDomain(entry)
+        if (!domain || seen.has(domain)) {
+            changed = true
+            continue
+        }
+        seen.add(domain)
+        if (domain !== entry) {
+            changed = true
+        }
+        domains.push(domain)
+    }
+    return { domains, changed }
+}
+
+/**
+ * Add normalized entries to a list without creating duplicates or redundant
+ * subdomains of an existing entry.
+ * @param {string[]} domains Already-sanitized list.
+ * @param {unknown} incoming Raw entries (e.g. an imported JSON array).
+ * @returns {{ domains: string[], added: number, duplicate: number, invalid: number }}
+ */
+export function mergeWhitelist(domains, incoming) {
+    const merged = [...domains]
+    const seen = new Set(merged)
+    let added = 0
+    let duplicate = 0
+    let invalid = 0
+
+    for (const raw of Array.isArray(incoming) ? incoming : []) {
+        const domain = normalizeDomain(raw)
+        if (!domain) {
+            invalid += 1
+            continue
+        }
+        if (seen.has(domain) || findCoveringDomain(domain, merged)) {
+            duplicate += 1
+            continue
+        }
+        seen.add(domain)
+        merged.push(domain)
+        added += 1
+    }
+
+    return { domains: merged, added, duplicate, invalid }
+}
+
+/**
+ * Drop every entry covering `hostname` — used by the popup's "remove current
+ * domain" action, which must also undo a parent entry that covers this host.
+ * @param {unknown} whitelist
+ * @param {string} hostname
+ * @returns {{ domains: string[], removed: string[] }}
+ */
+export function removeHostFromWhitelist(whitelist, hostname) {
+    const list = Array.isArray(whitelist) ? whitelist : []
+    const host = typeof hostname === "string" ? hostname.toLowerCase() : ""
+    if (!host) {
+        return { domains: [...list], removed: [] }
+    }
+
+    /** @type {string[]} */
+    const domains = []
+    /** @type {string[]} */
+    const removed = []
+    for (const entry of list) {
+        const covered =
+            typeof entry === "string" &&
+            entry !== "" &&
+            entryCovers(host, entry.toLowerCase())
+        if (covered) {
+            removed.push(entry)
+        } else {
+            domains.push(entry)
+        }
+    }
+    return { domains, removed }
 }
 
 /**

@@ -72,6 +72,26 @@ The format follows [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/
 
 ## Extension
 
+### [1.7.3] — 2026-10-23
+
+#### Fixed
+- Whitelist entries are canonicalized before they are stored. Pasting a URL
+  (`https://GitHub.com/settings`), a host with a port, mixed case, a trailing dot
+  or an IDN now yields the bare lowercase hostname the matcher compares against,
+  instead of an entry that could never match. Existing lists are repaired once,
+  in place, the next time the popup or options page opens.
+- Adding a domain the whitelist already covers (`gist.github.com` under
+  `github.com`) is reported as "already covered" instead of adding a redundant
+  row.
+- "Remove current domain" also drops a parent entry that covers the current host,
+  so removing `gist.github.com` while `github.com` is whitelisted now stops the
+  site being intercepted.
+- The popup's add/remove button uses the same host policy as the content
+  script, so its state can no longer contradict what the page actually does.
+- Importing a whitelist file validates and de-duplicates every entry, reports how
+  many were added or skipped, and merges into the existing list instead of
+  replacing it — a malformed or partial file can no longer wipe the whitelist.
+
 ### [1.7.2] — 2026-10-16
 
 #### Added
