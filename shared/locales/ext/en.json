@@ -25,6 +25,8 @@
     "openInBackgroundLabel": "Open in background",
     "openInBackgroundDesc": "Keep focus on the current tab when opening links",
     "openInBackgroundTitle": "Open in background",
+    "markVisitedLinksLabel": "Mark visited links",
+    "markVisitedLinksDesc": "Recolor links you opened from this extension",
     "moreSettings": "More settings",
     "cannotDetectCurrentDomain": "Cannot detect current domain",
     "optionsTitle": "Extension Settings",

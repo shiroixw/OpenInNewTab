@@ -44,14 +44,7 @@
      * @param {string} theme Theme to apply ('light', 'dark', or 'auto')
      */
     function applyTheme(theme) {
-        if (theme === "auto") {
-            const prefersDark = window.matchMedia(
-                "(prefers-color-scheme: dark)"
-            ).matches
-            document.body.style.colorScheme = prefersDark ? "dark" : "light"
-        } else {
-            document.body.style.colorScheme = theme
-        }
+        window.OINTTheme.apply(theme)
     }
 
     /**
@@ -105,7 +98,13 @@
      */
     async function initialize() {
         try {
-            applyTheme(await getThemePreference())
+            const theme = await getThemePreference()
+            applyTheme(theme)
+            window.OINTTheme.watchSystem(() => {
+                if (theme === "auto") {
+                    applyTheme("auto")
+                }
+            })
             currentLanguage = await getLanguagePreference()
             updateLanguage()
 

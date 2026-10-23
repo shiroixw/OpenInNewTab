@@ -62,16 +62,7 @@
      * @param {string} theme Theme to apply ('light', 'dark', or 'auto')
      */
     function applyTheme(theme) {
-        const body = document.body
-
-        if (theme === "auto") {
-            const prefersDark = window.matchMedia(
-                "(prefers-color-scheme: dark)"
-            ).matches
-            body.style.colorScheme = prefersDark ? "dark" : "light"
-        } else {
-            body.style.colorScheme = theme
-        }
+        window.OINTTheme.apply(theme)
 
         document.querySelectorAll(".theme-option").forEach((btn) => {
             if (btn.getAttribute("data-theme") === theme) {
@@ -127,6 +118,32 @@
         }
     }
 
+    /**
+     * Whether intercepted links are recoloured with the browser's visited
+     * colour. Opt-out: an absent key means on.
+     * @returns {Promise<boolean>}
+     */
+    async function getMarkVisitedLinksPreference() {
+        try {
+            const result = await chrome.storage.sync.get(["markVisitedLinks"])
+            return result.markVisitedLinks !== false
+        } catch (error) {
+            console.error("Error getting markVisitedLinks:", error)
+            return true
+        }
+    }
+
+    /**
+     * @param {boolean} enabled
+     */
+    async function setMarkVisitedLinksPreference(enabled) {
+        try {
+            await chrome.storage.sync.set({ markVisitedLinks: enabled })
+        } catch (error) {
+            console.error("Error saving markVisitedLinks:", error)
+        }
+    }
+
 
     /**
      * Get text by language
@@ -177,6 +194,20 @@
         )
         openInBackgroundToggle.closest(".toggle-switch").title = getText(
             "openInBackgroundLabel"
+        )
+        document.getElementById("markVisitedLinksLabel").textContent =
+            getText("markVisitedLinksLabel")
+        document.getElementById("markVisitedLinksDesc").textContent =
+            getText("markVisitedLinksDesc")
+        const markVisitedLinksToggle = document.getElementById(
+            "markVisitedLinksToggle"
+        )
+        markVisitedLinksToggle.setAttribute(
+            "aria-label",
+            getText("markVisitedLinksLabel")
+        )
+        markVisitedLinksToggle.closest(".toggle-switch").title = getText(
+            "markVisitedLinksLabel"
         )
         document.getElementById("whitelistHeading").textContent =
             getText("whitelistHeading")
@@ -550,6 +581,11 @@
         try {
             currentTheme = await getThemePreference()
             applyTheme(currentTheme)
+            window.OINTTheme.watchSystem(() => {
+                if (currentTheme === "auto") {
+                    applyTheme("auto")
+                }
+            })
 
             await updateLanguage()
 
@@ -577,6 +613,17 @@
             openInBackgroundToggle.addEventListener("change", async () => {
                 await setOpenInBackgroundPreference(
                     openInBackgroundToggle.checked
+                )
+            })
+
+            const markVisitedLinksToggle = document.getElementById(
+                "markVisitedLinksToggle"
+            )
+            markVisitedLinksToggle.checked =
+                await getMarkVisitedLinksPreference()
+            markVisitedLinksToggle.addEventListener("change", async () => {
+                await setMarkVisitedLinksPreference(
+                    markVisitedLinksToggle.checked
                 )
             })
 

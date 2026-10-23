@@ -43,7 +43,7 @@ You can also manually add domains by typing them in the input field (e.g., `stac
 -   **Modern UI**: Clean, responsive design with smooth animations and hover effects
 -   **Internationalization**: Automatic language detection (English / 简体中文 / 繁體中文) based on browser settings
 -   **Open in background** (optional): New tabs open without stealing focus from the current page
--   **Visited-link marking** (always on): Links you opened through the extension are recolored with the browser's visited colour
+-   **Visited-link marking** (on by default, can be turned off in Settings → Link behavior): Links you opened through the extension are recolored with the browser's visited colour. Turn it off on sites whose own link styling should not change
 -   **Onboarding**: A welcome page opens on first install to explain whitelist mode and guide first-time setup
 
 ## Installation
