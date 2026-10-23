@@ -56,8 +56,10 @@
     }
 }
 
-/* Manual dark mode override */
-body[style*="color-scheme: dark"] {
+/* Manual dark mode override. Driven by theme.js, which sets the attribute —
+   never by matching an inline `style` string, which silently stops working the
+   moment the declaration order or value formatting changes. */
+body[data-color-scheme="dark"] {
     --bg-primary: #1a1a1a;
     --bg-secondary: #2d2d2d;
     --text-primary: #ffffff;
@@ -77,7 +79,7 @@ body[style*="color-scheme: dark"] {
 }
 
 /* Manual light mode override */
-body[style*="color-scheme: light"] {
+body[data-color-scheme="light"] {
     --bg-primary: #ffffff;
     --bg-secondary: #f8f9fa;
     --text-primary: #333333;

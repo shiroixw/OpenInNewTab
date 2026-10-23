@@ -8,8 +8,11 @@ const root = join(dirname(fileURLToPath(import.meta.url)), "..")
 const popupScript = readFileSync(join(root, "extension/popup.js"), "utf8")
 const optionsScript = readFileSync(join(root, "extension/options.js"), "utf8")
 const contentScript = readFileSync(join(root, "extension/content.js"), "utf8")
+const welcomeScript = readFileSync(join(root, "extension/welcome.js"), "utf8")
+const popupCss = readFileSync(join(root, "extension/popup.css"), "utf8")
 const popupHtml = readFileSync(join(root, "extension/popup.html"), "utf8")
 const optionsHtml = readFileSync(join(root, "extension/options.html"), "utf8")
+const welcomeHtml = readFileSync(join(root, "extension/welcome.html"), "utf8")
 const privacyPolicy = readFileSync(join(root, "PRIVACY_POLICY.md"), "utf8")
 const websitePrivacyPolicy = readFileSync(
     join(root, "website/privacy-policy.html"),
@@ -116,6 +119,56 @@ describe("extension quality contracts", () => {
             /isHostAllowed/,
             "popup.js must use the shared host policy for the quick-add state"
         )
+    })
+
+    it("theme is driven by a data attribute, not an inline style match", () => {
+        assert.match(popupCss, /body\[data-color-scheme="dark"\]/)
+        assert.match(popupCss, /body\[data-color-scheme="light"\]/)
+        assert.doesNotMatch(
+            popupCss,
+            /body\[style\*=/,
+            "popup.css must not select on the inline style string"
+        )
+    })
+
+    it("extension pages delegate theme application to theme.js", () => {
+        for (const [label, source] of [
+            ["popup.js", popupScript],
+            ["options.js", optionsScript],
+            ["welcome.js", welcomeScript],
+        ]) {
+            assert.match(
+                source,
+                /OINTTheme\.apply\(/,
+                `${label} must apply the theme through the shared runtime`
+            )
+            assert.doesNotMatch(
+                source,
+                /body\.style\.colorScheme\s*=/,
+                `${label} must not write the scheme directly`
+            )
+            assert.match(
+                source,
+                /OINTTheme\.watchSystem\(/,
+                `${label} must follow OS changes while the preference is auto`
+            )
+        }
+    })
+
+    it("every extension page loads theme.js before its own script", () => {
+        for (const [label, html, script] of [
+            ["popup.html", popupHtml, "popup.js"],
+            ["options.html", optionsHtml, "options.js"],
+            ["welcome.html", welcomeHtml, "welcome.js"],
+        ]) {
+            const themeTag = html.indexOf('src="theme.js"')
+            const scriptTag = html.indexOf(`src="${script}"`)
+            assert.ok(themeTag !== -1, `${label} must load theme.js`)
+            assert.ok(
+                themeTag < scriptTag,
+                `${label} must load theme.js before ${script}`
+            )
+        }
     })
 
     it("content script probes the runtime before preventing the default", () => {
