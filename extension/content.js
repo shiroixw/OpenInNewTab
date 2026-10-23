@@ -18,12 +18,19 @@
     const MSG_OPEN_TAB = "OPEN_TAB"
     const PATCHED_ATTR = "data-oint-patched"
     const VISITED_ATTR = "data-oint-visited"
+    const STORAGE_KEY_MARK_VISITED = "markVisitedLinks"
     const STORAGE_KEY_VISITED = "visitedLinks"
     const VISITED_LINKS_LIMIT = 2000
 
     const state = {
         whitelist: [],
         openInBackground: false,
+        /**
+         * Recolouring links with the browser's visited colour is optional:
+         * forcing it overrides the site's own link styling, which reads as a
+         * bug on sites with static menus (see issue #26).
+         */
+        markVisited: true,
         visited: new Set(),
         intercepting: false,
         observer: null,
@@ -83,7 +90,11 @@
         event.stopPropagation()
         event.stopImmediatePropagation()
 
-        rememberVisit(link)
+        // With marking turned off we neither record the URL nor recolour the
+        // link — the preference is opt-out of the feature, not just of its CSS.
+        if (state.markVisited) {
+            rememberVisit(link)
+        }
 
         chrome.runtime
             .sendMessage({
@@ -154,11 +165,19 @@
     }
 
     function processLink(link) {
-        patchLinkTarget(link)
-        markVisitedLink(link)
+        // Background-tab mode opens the tab itself, so a `target=_blank` would
+        // open a second one; the visited mark is orthogonal to that.
+        if (!state.openInBackground) {
+            patchLinkTarget(link)
+        }
+        if (state.markVisited) {
+            markVisitedLink(link)
+        } else {
+            unmarkVisitedLink(link)
+        }
     }
 
-    function patchLinksUnder(root) {
+    function processLinksUnder(root) {
         if (!root || root.nodeType !== Node.ELEMENT_NODE) {
             return
         }
@@ -187,7 +206,7 @@
         const batch = state.pending
         state.pending = []
         for (const node of batch) {
-            patchLinksUnder(node)
+            processLinksUnder(node)
         }
     }
 
@@ -240,57 +259,55 @@
         state.scheduled = false
     }
 
-    function startPatching() {
-        const onReady = () => {
-            if (!state.intercepting || state.openInBackground) {
-                return
-            }
-            patchLinksUnder(document.body)
-            startObserver()
-        }
-        if (document.body) {
-            onReady()
-        } else {
-            document.addEventListener("DOMContentLoaded", onReady, {
-                once: true,
-            })
-        }
-    }
-
-    function teardownPatching() {
-        stopObserver()
-        removePatchedTargets()
-        removeVisitedMarks()
-    }
-
-    function syncPatching() {
-        if (!state.intercepting || state.openInBackground) {
-            teardownPatching()
+    /**
+     * Bring the page in line with the current state — whitelist hit,
+     * background-tab mode and the visited-mark preference — in one idempotent
+     * pass. Every preference change funnels through here, so no combination of
+     * toggles can leave stale patches or marks behind.
+     */
+    function syncDomState() {
+        if (!state.intercepting) {
+            stopObserver()
+            removePatchedTargets()
+            removeVisitedMarks()
             return
         }
-        startPatching()
+
+        // Background-tab mode opens the tab itself; a leftover target=_blank
+        // would open a second one.
+        if (state.openInBackground) {
+            removePatchedTargets()
+        }
+
+        const apply = () => {
+            if (!state.intercepting) {
+                return
+            }
+            // Patches when target patching is on, marks/unmarks per preference.
+            processLinksUnder(document.body)
+            startObserver()
+        }
+
+        if (document.body) {
+            apply()
+        } else {
+            document.addEventListener("DOMContentLoaded", apply, { once: true })
+        }
     }
 
     function applyToPage() {
         const should = isHostAllowed(location.hostname, state.whitelist)
 
-        if (should && !state.intercepting) {
-            document.addEventListener("click", handleLinkClick, true)
-            state.intercepting = true
-            syncPatching()
-            return
+        if (should !== state.intercepting) {
+            if (should) {
+                document.addEventListener("click", handleLinkClick, true)
+            } else {
+                document.removeEventListener("click", handleLinkClick, true)
+            }
+            state.intercepting = should
         }
 
-        if (!should && state.intercepting) {
-            document.removeEventListener("click", handleLinkClick, true)
-            teardownPatching()
-            state.intercepting = false
-            return
-        }
-
-        if (should && state.intercepting) {
-            syncPatching()
-        }
+        syncDomState()
     }
 
     function applyStorage(result) {
@@ -298,6 +315,8 @@
             ? result.userWhitelist
             : []
         state.openInBackground = !!result.openInBackground
+        // Absent means "on": the preference only exists to opt out.
+        state.markVisited = result[STORAGE_KEY_MARK_VISITED] !== false
         state.visited = new Set(
             Array.isArray(result.visitedLinks) ? result.visitedLinks : []
         )
@@ -308,6 +327,7 @@
         chrome.storage.sync.get([
             "userWhitelist",
             "openInBackground",
+            STORAGE_KEY_MARK_VISITED,
         ]),
         chrome.storage.local.get([STORAGE_KEY_VISITED]),
     ])
@@ -322,14 +342,16 @@
      * Visited marks follow the stored URLs without a reload.
      */
     function syncVisitedMarks() {
-        if (document.body) patchLinksUnder(document.body)
+        if (state.intercepting) {
+            syncDomState()
+        }
     }
 
     chrome.storage.onChanged.addListener((changes, area) => {
         if (area === "local" && changes[STORAGE_KEY_VISITED]) {
             const next = changes[STORAGE_KEY_VISITED].newValue
             state.visited = new Set(Array.isArray(next) ? next : [])
-            if (state.intercepting) syncVisitedMarks()
+            syncVisitedMarks()
             return
         }
         if (area !== "sync") {
@@ -342,7 +364,15 @@
         if (changes.openInBackground) {
             state.openInBackground = !!changes.openInBackground.newValue
         }
-        if (changes.userWhitelist || changes.openInBackground) {
+        if (changes[STORAGE_KEY_MARK_VISITED]) {
+            state.markVisited =
+                changes[STORAGE_KEY_MARK_VISITED].newValue !== false
+        }
+        if (
+            changes.userWhitelist ||
+            changes.openInBackground ||
+            changes[STORAGE_KEY_MARK_VISITED]
+        ) {
             applyToPage()
         }
     })

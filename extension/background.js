@@ -8,7 +8,7 @@ const MSG_OPEN_TAB = "OPEN_TAB"
 chrome.runtime.onInstalled.addListener((details) => {
     if (details.reason === chrome.runtime.OnInstalledReason.INSTALL) {
         chrome.storage.sync.get(
-            ["userWhitelist", "openInBackground"],
+            ["userWhitelist", "openInBackground", "markVisitedLinks"],
             (result) => {
                 const updates = {}
                 if (!result.userWhitelist) {
@@ -16,6 +16,11 @@ chrome.runtime.onInstalled.addListener((details) => {
                 }
                 if (result.openInBackground === undefined) {
                     updates.openInBackground = false
+                }
+                if (result.markVisitedLinks === undefined) {
+                    // On by default: an absent key must behave like the
+                    // pre-preference releases so upgrades change nothing.
+                    updates.markVisitedLinks = true
                 }
                 if (Object.keys(updates).length > 0) {
                     chrome.storage.sync.set(updates)
