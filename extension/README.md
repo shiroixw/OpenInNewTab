@@ -96,6 +96,7 @@ In the popup **Settings** (gear icon) or on the **Options** page, enable **Open 
 
 1. Serve the fixture page, e.g. `npx http-server dev -p 8765` from the repo root.
 2. Open `http://127.0.0.1:8765/fixture.html`, add `127.0.0.1` to the whitelist, toggle the setting, and click the sample links.
+3. The fixture is the regression matrix for click interception: plain, nested, slotted, SVG and late-mounted shadow-DOM links, non-interceptable targets, and a hostile page that tries to preempt the click. Serve it over `http://` — the content script does not match `file://`.
 
 ### User Management
 
@@ -200,6 +201,17 @@ The extension popup automatically adapts to your system's dark/light mode prefer
 -   **Light Mode**: Clean white interface with subtle shadows
 -   **Dark Mode**: Dark theme with appropriate contrast for readability
 -   **Smooth Transitions**: Seamless theme switching without jarring changes
+
+## Known Limitations
+
+Interception follows the link, not the site, but a handful of shapes stay out of reach by design:
+
+-   **Closed shadow roots**: links rendered inside `attachShadow({ mode: "closed" })` are hidden from `composedPath()`, so they cannot be intercepted. Open shadow roots (Lit, LWC, Stencil, FAST, …) work at any nesting depth.
+-   **Navigation without `<a href>`**: `role="link"` elements, buttons wired to a client-side router, or sites that navigate on `pointerdown` expose no URL, so there is nothing to intercept.
+-   **Links inside iframes**: the content script runs in the top document only, so a link inside an embedded frame keeps native behaviour.
+-   **No pre-patching inside shadow roots**: dynamic links are patched and visited-marked in the top document. A link that lives in a shadow root is still intercepted on click (and marked once used), but it does not get `target="_blank"` up front.
+
+When an interception gap is reported, add a case to `dev/fixture.html` first — the fixture is the regression matrix, and a case that never fails there is a design limit rather than a bug.
 
 ## Security Considerations
 
