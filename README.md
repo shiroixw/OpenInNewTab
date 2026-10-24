@@ -97,6 +97,27 @@ extension.
 
 See [`CHANGELOG.md`](./CHANGELOG.md) for release notes (split per product).
 
+### Releasing the extension
+
+Releases are built by CI, never by hand:
+
+1. Bump the version and write the changelog entry in a normal PR (see above), then merge to `main`.
+2. Push a namespaced tag on that merge commit:
+
+    ```bash
+    git checkout main && git pull
+    git tag extension-v1.7.5
+    git push origin extension-v1.7.5
+    ```
+
+3. [`.github/workflows/release-extension.yml`](./.github/workflows/release-extension.yml) runs `version:verify`, lint, type-check and the test suite, packs `release/OpenInNewTab-extension-<version>.zip`, and publishes a GitHub Release whose body is the changelog section for that version.
+
+The workflow fails instead of publishing when the tag disagrees with `extension/manifest.json`, when the tagged commit is not on `main`, when the changelog has no matching section, or when a release for that tag already exists. Tags are namespaced (`extension-v…`, later `userscript-v…`) because the two products have independent version numbers — a bare `v1.8.0` would be ambiguous.
+
+`node scripts/changelog-section.mjs extension 1.7.5` prints the same notes locally. A dry run of the whole pipeline: tag a commit on a scratch branch and use **Actions → Release extension → Run workflow** with that tag; it will fail the "tag is on main" guard, which is the intended behaviour.
+
+The Chrome Web Store upload stays manual: attach `release/OpenInNewTab-extension-<version>.zip` to the store listing, and keep the store assets in `store/` in sync.
+
 To skip hooks (e.g. `git commit --amend`), use `HUSKY=0 git commit` on Unix shells, or disable Husky for that command per your environment.
 
 ## License

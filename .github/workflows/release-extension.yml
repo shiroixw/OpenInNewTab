@@ -1,0 +1,112 @@
+name: Release extension
+
+# The repository ships two products on independent SemVer tracks, so tags are
+# namespaced: `extension-v1.7.5`, later `userscript-v1.x.y`. A bare `v1.8.0`
+# would be ambiguous (userscript 1.8.0 > extension 1.7.5 numerically).
+on:
+  push:
+    tags:
+      - "extension-v*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing tag to release, e.g. extension-v1.7.5"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: "release-extension-${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}"
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: Build and publish
+    runs-on: ubuntu-latest
+    env:
+      HUSKY: "0"
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Resolve tag
+        id: resolve
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            tag="${{ inputs.tag }}"
+          else
+            tag="${GITHUB_REF_NAME}"
+          fi
+          if [[ ! "$tag" =~ ^extension-v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::Tag '$tag' is not of the form extension-v<major>.<minor>.<patch>"
+            exit 1
+          fi
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "version=${tag#extension-v}" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.resolve.outputs.tag }}
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      # A release must be cut from main. Tags on side branches are how #28, #29
+      # and #31 ended up merged into branches that never reached main.
+      - name: Verify the tag is on main
+        run: |
+          git fetch --no-tags origin main
+          if ! git merge-base --is-ancestor HEAD origin/main; then
+            echo "::error::Tag ${{ steps.resolve.outputs.tag }} is not an ancestor of origin/main"
+            exit 1
+          fi
+
+      - name: Verify the tag matches the manifest
+        run: |
+          version=$(node -p "require('./extension/manifest.json').version")
+          if [ "$version" != "${{ steps.resolve.outputs.version }}" ]; then
+            echo "::error::Tag says ${{ steps.resolve.outputs.version }}, extension/manifest.json says $version"
+            exit 1
+          fi
+
+      - run: npm ci
+
+      - name: Version invariants
+        run: npm run version:verify
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Type-check
+        run: npm run lint:tsc
+
+      - name: Test
+        run: npm test
+
+      - name: Pack extension
+        run: npm run pack:extension
+
+      - name: Build release notes
+        run: |
+          node scripts/changelog-section.mjs extension "${{ steps.resolve.outputs.version }}" > notes.md
+          if [ ! -s notes.md ]; then
+            echo "::error::CHANGELOG.md has no ${{ steps.resolve.outputs.version }} section for the extension"
+            exit 1
+          fi
+          printf '\n---\n\nPackaged from `%s`. Install: download the zip, unzip, load the folder via `chrome://extensions` → "Load unpacked".\n' \
+            "${{ steps.resolve.outputs.tag }}" >> notes.md
+
+      - name: Publish release
+        run: |
+          tag="${{ steps.resolve.outputs.tag }}"
+          if gh release view "$tag" >/dev/null 2>&1; then
+            echo "::error::Release $tag already exists — bump the version instead of re-releasing"
+            exit 1
+          fi
+          gh release create "$tag" \
+            "release/OpenInNewTab-extension-${{ steps.resolve.outputs.version }}.zip" \
+            --title "Extension ${{ steps.resolve.outputs.version }}" \
+            --notes-file notes.md
