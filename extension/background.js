@@ -6,6 +6,10 @@
 const MSG_OPEN_TAB = "OPEN_TAB"
 
 chrome.runtime.onInstalled.addListener((details) => {
+    // 1.7.4 removed visited-link marking. Drop the URL list it kept, so an
+    // upgraded install does not carry up to 2000 visited URLs forever.
+    chrome.storage.local.remove("visitedLinks")
+
     if (details.reason === chrome.runtime.OnInstalledReason.INSTALL) {
         chrome.storage.sync.get(
             ["userWhitelist", "openInBackground"],

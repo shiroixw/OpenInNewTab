@@ -74,6 +74,14 @@ The format follows [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/
 
 ### [1.7.4] — 2026-10-24
 
+#### Removed
+- **Visited-link marking** is gone, together with the `visitedLinks` list it kept
+  in `chrome.storage.local` (deleted on upgrade). It recoloured every link it had
+  seen with `color: VisitedText !important`, which overrode each site's own link
+  styling — on sites with static menus that reads as a rendering bug (#26).
+  What colour a link takes after a visit is the browser's decision; this
+  extension only decides where the link opens.
+
 #### Fixed
 - Theming no longer depends on matching an inline `style="color-scheme: …"`
   string. A shared `theme.js` resolves the preference once and publishes it as
