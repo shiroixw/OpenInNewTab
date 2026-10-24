@@ -203,6 +203,34 @@ export function removeHostFromWhitelist(whitelist, hostname) {
     return { domains, removed }
 }
 
+/** Schemes a new tab may be opened at on the extension's behalf. */
+const INTERCEPTABLE_SCHEMES = new Set(["http:", "https:"])
+
+/**
+ * Absolute URL a link points at, or `null` when the click must be left to the
+ * browser.
+ *
+ * `HTMLAnchorElement.href` already returns a string, but an SVG `<a>` exposes
+ * an `SVGAnimatedString` instead — handing that to `chrome.tabs.create` opened
+ * `…/[object SVGAnimatedString]/`. Resolving the raw attribute here keeps one
+ * string-or-nothing contract for every element shape a site throws at us.
+ * @param {string|null} href Raw `href` attribute (`getAttribute`), not `.href`.
+ * @param {string} baseURI Document base URL, for relative hrefs.
+ * @returns {string|null}
+ */
+export function resolveHref(href, baseURI) {
+    if (typeof href !== "string" || !href.trim() || shouldSkipHref(href)) {
+        return null
+    }
+    let url
+    try {
+        url = new URL(href, baseURI)
+    } catch {
+        return null
+    }
+    return INTERCEPTABLE_SCHEMES.has(url.protocol) ? url.href : null
+}
+
 /**
  * @param {string|null} href
  * @returns {boolean}

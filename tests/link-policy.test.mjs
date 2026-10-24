@@ -6,6 +6,7 @@ import {
     mergeWhitelist,
     normalizeDomain,
     removeHostFromWhitelist,
+    resolveHref,
     sanitizeWhitelist,
     shouldSkipClick,
     shouldSkipHref,
@@ -36,6 +37,46 @@ describe("shouldSkipHref", () => {
         assert.equal(shouldSkipHref("#section"), true)
         assert.equal(shouldSkipHref("https://example.com/a"), false)
         assert.equal(shouldSkipHref("/relative"), false)
+    })
+})
+
+describe("resolveHref", () => {
+    const base = "https://site.example/a/b"
+
+    it("resolves relative, absolute and SVG-style raw attributes to one string", () => {
+        // The SVG <a> case: callers pass getAttribute("href"), never `.href`.
+        assert.equal(resolveHref("/x", base), "https://site.example/x")
+        assert.equal(resolveHref("x", base), "https://site.example/a/x")
+        assert.equal(
+            resolveHref("./x#frag", base),
+            "https://site.example/a/x#frag"
+        )
+        assert.equal(
+            resolveHref("https://other.example/y", base),
+            "https://other.example/y"
+        )
+        assert.equal(
+            resolveHref("  https://other.example/y  ", base),
+            "https://other.example/y"
+        )
+    })
+
+    it("returns null for anything a new tab must not be opened at", () => {
+        for (const href of [
+            null,
+            "",
+            "   ",
+            "#frag",
+            "javascript:void(0)",
+            "JavaScript:void(0)",
+            "MAILTO:a@b.c",
+            "tel:+15551212",
+            "data:text/html,<p>x",
+            "ftp://example.com/x",
+            "http://",
+        ]) {
+            assert.equal(resolveHref(href, base), null, `expected null for ${href}`)
+        }
     })
 })
 

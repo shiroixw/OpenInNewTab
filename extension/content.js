@@ -11,7 +11,30 @@
 ;(async () => {
     "use strict"
 
-    const { isHostAllowed, shouldSkipClick, shouldSkipHref } = await import(
+    /**
+     * Set once the policy module has loaded. The click listener below is bound
+     * before that and has to tolerate the gap.
+     * @type {((event: MouseEvent) => void)|null}
+     */
+    let dispatchClick = null
+
+    // Bound synchronously, before the page has parsed its first script, to claim
+    // the earliest capture slot on the outermost node: capture runs
+    // outermost-first, and a page that stops propagation in its own window
+    // handler cannot be beaten from document. The policy import below is async,
+    // so the listener has to be a thin forwarder — binding it after the import
+    // resolves would put it behind every handler the page registered meanwhile.
+    window.addEventListener(
+        "click",
+        (event) => {
+            if (dispatchClick) {
+                dispatchClick(event)
+            }
+        },
+        true
+    )
+
+    const { isHostAllowed, resolveHref, shouldSkipClick } = await import(
         chrome.runtime.getURL("link-policy.js")
     )
 
@@ -58,13 +81,58 @@
         }
     }
 
-    function handleLinkClick(event) {
+    /**
+     * Absolute URL a link points at, or `null` when the click is not ours to
+     * intercept. Every link read goes through here rather than `.href`: an SVG
+     * `<a>` exposes an `SVGAnimatedString` there, which used to open
+     * `…/[object SVGAnimatedString]/`.
+     * @param {Element} link
+     * @returns {string|null}
+     */
+    function linkUrl(link) {
+        return resolveHref(link.getAttribute("href"), document.baseURI)
+    }
+
+    /**
+     * Resolve the anchor a click landed on.
+     *
+     * `event.target` is retargeted to the outermost shadow host when the click
+     * starts inside a shadow tree, so `closest()` on it finds nothing and the
+     * click was never intercepted — web-component navigation (the Salesforce
+     * global nav, for example) slipped through. The composed path still lists
+     * the real anchor, innermost first.
+     * @param {MouseEvent} event
+     * @returns {HTMLAnchorElement|null}
+     */
+    function findClickedLink(event) {
+        if (typeof event.composedPath === "function") {
+            for (const node of event.composedPath()) {
+                if (
+                    node.nodeType === Node.ELEMENT_NODE &&
+                    node.matches?.("a[href]")
+                ) {
+                    return node
+                }
+            }
+            return null
+        }
         const target = event.target
         if (!target || typeof target.closest !== "function") {
+            return null
+        }
+        return target.closest("a[href]")
+    }
+
+    function handleLinkClick(event) {
+        if (!state.intercepting) {
             return
         }
-        const link = target.closest("a[href]")
+        const link = findClickedLink(event)
         if (!link || shouldSkipClick(event, link)) {
+            return
+        }
+        const url = linkUrl(link)
+        if (!url) {
             return
         }
         // A stale content script — the extension was reloaded or updated while
@@ -82,23 +150,25 @@
         chrome.runtime
             .sendMessage({
                 type: MSG_OPEN_TAB,
-                url: link.href,
+                url,
                 active: !state.openInBackground,
             })
             .catch((error) => {
                 console.error("Error opening tab:", error)
                 // The default was already prevented above, so falling through is
                 // no longer an option — open the link ourselves instead.
-                openLinkFallback(link.href)
+                openLinkFallback(url)
             })
     }
+
+    dispatchClick = handleLinkClick
 
     function patchLinkTarget(link) {
         if (
             link.target ||
             link.hasAttribute("download") ||
             link.hasAttribute(PATCHED_ATTR) ||
-            shouldSkipHref(link.getAttribute("href"))
+            !linkUrl(link)
         ) {
             return
         }
@@ -218,25 +288,10 @@
     }
 
     function applyToPage() {
-        const should = isHostAllowed(location.hostname, state.whitelist)
-
-        if (should && !state.intercepting) {
-            document.addEventListener("click", handleLinkClick, true)
-            state.intercepting = true
-            syncPatching()
-            return
-        }
-
-        if (!should && state.intercepting) {
-            document.removeEventListener("click", handleLinkClick, true)
-            teardownPatching()
-            state.intercepting = false
-            return
-        }
-
-        if (should && state.intercepting) {
-            syncPatching()
-        }
+        // The click listener is bound once, on `window`, before the policy
+        // module loads (see the top of this file); `intercepting` gates it.
+        state.intercepting = isHostAllowed(location.hostname, state.whitelist)
+        syncPatching()
     }
 
     function applyStorage(result) {

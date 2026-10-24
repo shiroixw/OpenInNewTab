@@ -14,6 +14,20 @@ The format follows [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/
 
 ## Userscript
 
+### [Unreleased]
+
+#### Fixed
+- Clicks inside a shadow root are intercepted: the anchor is resolved through
+  `event.composedPath()` instead of `event.target.closest()`, which is
+  retargeted to the shadow host on component-based sites.
+- Link URLs come from the `href` attribute, not `.href`, so SVG anchors open at
+  the real URL instead of `…/[object SVGAnimatedString]/`. Only `http(s)`
+  targets are opened, and hash anchors are no longer patched with
+  `target="_blank"`.
+- The click listener is bound once at document-start on `window` capture, and no
+  longer re-bound when the whitelist changes — a page that stops propagation in
+  its own window handler cannot preempt it.
+
 ### [1.8.0] — 2026-10-11
 
 #### Added
@@ -71,6 +85,23 @@ The format follows [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/
 ---
 
 ## Extension
+
+### [1.7.5] — 2026-10-24
+
+#### Fixed
+- Clicks are resolved through `event.composedPath()`, so links rendered inside a
+  shadow root (Salesforce's `hgf-c360nav`, and any Lit / LWC / Stencil nav) are
+  intercepted again. The click target is retargeted to the shadow host there, and
+  `closest()` on it never found the anchor.
+- Link URLs are resolved from the `href` attribute instead of `.href`. An SVG
+  `<a>` exposes an `SVGAnimatedString`, which opened
+  `…/[object SVGAnimatedString]/`. Only `http(s)` targets are opened now.
+- The click listener claims the outermost capture slot: it is bound
+  synchronously on `window` before the policy module is imported, so a page that
+  stops propagation in its own window-capture handler can no longer swallow the
+  click.
+- `dev/fixture.html` is now a regression matrix for all of the above (nested and
+  slotted shadow roots, SVG anchors, late-mounted hosts, a preempting page).
 
 ### [1.7.4] — 2026-10-24
 

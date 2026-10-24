@@ -1455,6 +1455,66 @@
     }
 
     /**
+     * Absolute URL a link points at, or `null` when the click is not ours to
+     * intercept. Every link read goes through here rather than `.href`: an SVG
+     * `<a>` exposes an `SVGAnimatedString` there, which would otherwise be
+     * opened as `…/[object SVGAnimatedString]/`.
+     * MIRROR: extension/content.js#linkUrl, extension/link-policy.js#resolveHref
+     * @param {Element} link
+     * @returns {string|null}
+     */
+    function linkUrl(link) {
+        const href = link.getAttribute("href")
+        if (typeof href !== "string" || !href.trim()) return null
+        if (
+            href.startsWith("javascript:") ||
+            href.startsWith("mailto:") ||
+            href.startsWith("tel:") ||
+            href.startsWith("#")
+        ) {
+            return null
+        }
+        let url
+        try {
+            url = new URL(href, document.baseURI)
+        } catch {
+            return null
+        }
+        return url.protocol === "http:" || url.protocol === "https:"
+            ? url.href
+            : null
+    }
+
+    /**
+     * Resolve the anchor a click landed on.
+     *
+     * `event.target` is retargeted to the outermost shadow host when the click
+     * starts inside a shadow tree, so `closest()` on it finds nothing and the
+     * click was never intercepted — web-component navigation (the Salesforce
+     * global nav, for example) slipped through. The composed path still lists
+     * the real anchor, innermost first.
+     * MIRROR: extension/content.js#findClickedLink
+     * @param {MouseEvent} event
+     * @returns {HTMLAnchorElement|null}
+     */
+    function findClickedLink(event) {
+        if (typeof event.composedPath === "function") {
+            for (const node of event.composedPath()) {
+                if (
+                    node.nodeType === Node.ELEMENT_NODE &&
+                    node.matches?.("a[href]")
+                ) {
+                    return node
+                }
+            }
+            return null
+        }
+        const target = event.target
+        if (!target || typeof target.closest !== "function") return null
+        return target.closest("a[href]")
+    }
+
+    /**
      * Capture-phase click handler. Synchronous so the new-tab call stays in
      * the user-gesture stack (popup blockers won't fire).
      * Background-tab opening (when enabled & supported) goes through
@@ -1463,10 +1523,12 @@
      * @param {MouseEvent} event
      */
     function handleLinkClick(event) {
-        const target = event.target
-        if (!target || typeof target.closest !== "function") return
-        const link = target.closest("a[href]")
+        if (!state.isApplied) return
+        const link = findClickedLink(event)
         if (!link || shouldSkipLinkClick(event, link)) return
+
+        const url = linkUrl(link)
+        if (!url) return
 
         event.preventDefault()
         event.stopPropagation()
@@ -1476,7 +1538,7 @@
 
         if (state.caps.canOpenInTab && state.settings.openInBackground) {
             try {
-                GM_openInTab(link.href, {
+                GM_openInTab(url, {
                     active: false,
                     insert: true,
                     setParent: true,
@@ -1490,7 +1552,7 @@
             }
         }
 
-        window.open(link.href, "_blank", "noopener,noreferrer")
+        window.open(url, "_blank", "noopener,noreferrer")
     }
 
     /**
@@ -1502,7 +1564,8 @@
         if (
             link.target ||
             link.hasAttribute("download") ||
-            link.hasAttribute(PATCHED_ATTR)
+            link.hasAttribute(PATCHED_ATTR) ||
+            !linkUrl(link)
         ) {
             return
         }
@@ -1519,7 +1582,8 @@
      * @param {HTMLAnchorElement} link
      */
     function markVisitedLink(link) {
-        if (state.visited.has(link.href)) {
+        const url = linkUrl(link)
+        if (url && state.visited.has(url)) {
             link.setAttribute(VISITED_ATTR, "1")
             link.style.setProperty("color-scheme", "light dark")
             link.style.setProperty("color", "VisitedText", "important")
@@ -1541,8 +1605,10 @@
      * @param {HTMLAnchorElement} link
      */
     function rememberVisit(link) {
-        const urls = [...state.visited].filter((u) => u !== link.href)
-        urls.push(link.href)
+        const url = linkUrl(link)
+        if (!url) return
+        const urls = [...state.visited].filter((u) => u !== url)
+        urls.push(url)
         state.visited = new Set(urls.slice(-VISITED_LINKS_LIMIT))
         markVisitedLink(link)
         GM_setValue(STORAGE_KEY_VISITED, [...state.visited])
@@ -1640,8 +1706,9 @@
         const shouldApply = isWhitelisted()
 
         if (shouldApply && !state.isApplied) {
-            // Click capture works without DOM ready, bind ASAP.
-            document.addEventListener("click", handleLinkClick, true)
+            // The click listener is bound once at document-start (see the boot
+            // section) so it stays ahead of any page window-capture handler;
+            // this flag is what actually switches interception on.
             state.isApplied = true
 
             const onBodyReady = () => {
@@ -1660,7 +1727,6 @@
         }
 
         if (!shouldApply && state.isApplied) {
-            document.removeEventListener("click", handleLinkClick, true)
             stopObserver()
             removePatchedTargets()
             removeVisitedMarks()
@@ -1848,6 +1914,11 @@
     function initialize() {
         try {
             detectCaps()
+            // Bound before the whitelist is known and never moved: window
+            // capture is the earliest stop a document-start script can claim,
+            // and page handlers registered in the meantime stay behind it.
+            // handleLinkClick no-ops until state.isApplied flips.
+            window.addEventListener("click", handleLinkClick, true)
             loadSettings()
             refreshMenu()
             applyToCurrentPage()

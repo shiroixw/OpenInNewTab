@@ -18,36 +18,224 @@
             h1 {
                 font-size: 1.25rem;
             }
+            h2 {
+                font-size: 1rem;
+                margin-bottom: 0.25rem;
+            }
             ul {
                 padding-left: 1.25rem;
             }
             a {
                 color: inherit;
             }
+            section + section {
+                margin-top: 2rem;
+            }
+            svg a {
+                fill: currentColor;
+            }
             .hint {
                 font-size: 0.875rem;
                 opacity: 0.8;
+            }
+            output {
+                font-variant-numeric: tabular-nums;
             }
         </style>
     </head>
     <body>
         <h1>Extension test fixture</h1>
         <p class="hint">
-            Add <strong>127.0.0.1</strong> or <strong>localhost</strong> to the
-            whitelist, then toggle “Open in background” in extension settings.
+            Serve over HTTP (<code>python -m http.server</code> in the repo root,
+            then open <code>/dev/fixture.html</code>) and add
+            <strong>127.0.0.1</strong> to the whitelist — the content script only
+            matches <code>http(s)://</code>, so <code>file://</code> proves
+            nothing. Every link below must open in a new tab; with “Open in
+            background” on, none of them may take focus.
         </p>
-        <ul>
-            <li>
-                <a href="https://example.com/">External link (example.com)</a>
-            </li>
-            <li>
-                <a href="https://www.example.org/">Another external link</a>
-            </li>
-            <li><a href="#section">Same-page anchor (should not intercept)</a></li>
-        </ul>
+
+        <section>
+            <h2>Plain anchors</h2>
+            <ul>
+                <li>
+                    <a href="https://example.com/">External link (example.com)</a>
+                </li>
+                <li>
+                    <a href="https://www.example.org/">Another external link</a>
+                </li>
+                <li>
+                    <a href="/relative">Relative link (resolved against this page)</a>
+                </li>
+                <li>
+                    <a id="nested-child" href="https://example.com/nested">
+                        <strong>Click the bold text, not the padding</strong>
+                    </a>
+                </li>
+                <li><a href="#section">Same-page anchor (must stay in-page)</a></li>
+                <li>
+                    <a href="mailto:test@example.com">mailto: (must stay in-page)</a>
+                </li>
+                <li>
+                    <a href="javascript:void 0">javascript: (must stay in-page)</a>
+                </li>
+            </ul>
+        </section>
+
+        <section>
+            <h2>Shadow DOM</h2>
+            <p class="hint">
+                The anchor lives inside an open shadow root, so
+                <code>event.target</code> is retargeted to the host. These are the
+                Salesforce-nav shape; all four must open in a new tab.
+            </p>
+            <ul>
+                <li><oint-link></oint-link></li>
+                <li><oint-nested></oint-nested></li>
+                <li>
+                    <oint-slotted>
+                        <a slot="slot" href="https://example.com/slotted">
+                            Slotted link (light DOM, rendered in a shadow root)
+                        </a>
+                    </oint-slotted>
+                </li>
+                <li>
+                    <oint-wrapped>
+                        <span>Anchor two levels down in a shadow tree</span>
+                    </oint-wrapped>
+                </li>
+            </ul>
+        </section>
+
+        <section>
+            <h2>SVG anchor</h2>
+            <p class="hint">
+                An SVG <code>&lt;a&gt;</code> exposes
+                <code>SVGAnimatedString</code> at <code>.href</code>; the tab must
+                open at the real URL, not at
+                <code>…/[object SVGAnimatedString]/</code>.
+            </p>
+            <svg width="260" height="28" role="img" aria-label="SVG link example">
+                <a href="https://example.com/svg-anchor">
+                    <rect
+                        width="260"
+                        height="24"
+                        rx="4"
+                        fill="currentColor"
+                        opacity="0.15"
+                    />
+                    <text x="8" y="17" fill="currentColor">SVG anchor</text>
+                </a>
+            </svg>
+        </section>
+
+        <section>
+            <h2>Dynamically mounted shadow host</h2>
+            <p class="hint">
+                Inserted after load, so the observer-driven patch has to catch it
+                too. The link must open in a new tab.
+            </p>
+            <button id="mount" type="button">Mount a shadow host</button>
+            <div id="mountTarget"></div>
+        </section>
+
+        <section>
+            <h2>Hostile page: window-capture preemption</h2>
+            <p class="hint">
+                With the box ticked, the page registers a window capture handler
+                that calls <code>stopImmediatePropagation()</code> and
+                <code>preventDefault()</code>. The extension binds first, so the
+                click must still open a new tab and the counter must stay at
+                <output id="preemptCount">0</output>.
+            </p>
+            <label>
+                <input type="checkbox" id="preempt" />
+                Let the page try to swallow the click
+            </label>
+            <p><a data-hostile href="https://example.com/hostile">Hostile-page link</a></p>
+        </section>
+
         <p id="section" class="hint">
-            With background mode on: left-click external links should open a new
-            tab without switching focus. Ctrl/Cmd+click is left to the browser.
+            Ctrl/Cmd+click, Shift+click and middle-click are always left to the
+            browser.
         </p>
+
+        <script>
+            ;(() => {
+                "use strict"
+
+                const mount = (host, html) => {
+                    const root = host.shadowRoot || host.attachShadow({ mode: "open" })
+                    root.innerHTML = html
+                }
+
+                const link = (path, label) =>
+                    `<a href="https://example.com/${path}">${label}</a>`
+
+                customElements.define(
+                    "oint-link",
+                    class extends HTMLElement {
+                        connectedCallback() {
+                            mount(this, link("shadow", "Shadow-root link"))
+                        }
+                    }
+                )
+
+                customElements.define(
+                    "oint-nested",
+                    class extends HTMLElement {
+                        connectedCallback() {
+                            mount(
+                                this,
+                                `<oint-link></oint-link>`
+                            )
+                        }
+                    }
+                )
+
+                customElements.define(
+                    "oint-slotted",
+                    class extends HTMLElement {
+                        connectedCallback() {
+                            mount(this, `<div><slot name="slot"></slot></div>`)
+                        }
+                    }
+                )
+
+                customElements.define(
+                    "oint-wrapped",
+                    class extends HTMLElement {
+                        connectedCallback() {
+                            mount(
+                                this,
+                                `<oint-slotted><a slot="slot" href="https://example.com/deep">Deep slotted link</a></oint-slotted>`
+                            )
+                        }
+                    }
+                )
+
+                document.getElementById("mount").addEventListener("click", () => {
+                    const host = document.createElement("p")
+                    document.getElementById("mountTarget").append(host)
+                    mount(host, link("late-shadow", "Late-mounted shadow link"))
+                })
+
+                // Only armed by the checkbox — a plain fixture must not fight the
+                // extension, or every other case would look broken.
+                const preempt = document.getElementById("preempt")
+                const counter = document.getElementById("preemptCount")
+                window.addEventListener(
+                    "click",
+                    (event) => {
+                        if (!preempt.checked) return
+                        const target = event.target
+                        if (!target.closest?.("[data-hostile]")) return
+                        counter.textContent = String(Number(counter.textContent) + 1)
+                        event.preventDefault()
+                        event.stopImmediatePropagation()
+                    },
+                    true
+                )
+            })()
+        </script>
     </body>
 </html>

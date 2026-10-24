@@ -9,6 +9,10 @@ const popupScript = readFileSync(join(root, "extension/popup.js"), "utf8")
 const optionsScript = readFileSync(join(root, "extension/options.js"), "utf8")
 const contentScript = readFileSync(join(root, "extension/content.js"), "utf8")
 const welcomeScript = readFileSync(join(root, "extension/welcome.js"), "utf8")
+const userscript = readFileSync(
+    join(root, "userscript/OpenInNewTab.user.js"),
+    "utf8"
+)
 const popupCss = readFileSync(join(root, "extension/popup.css"), "utf8")
 const popupHtml = readFileSync(join(root, "extension/popup.html"), "utf8")
 const optionsHtml = readFileSync(join(root, "extension/options.html"), "utf8")
@@ -169,6 +173,67 @@ describe("extension quality contracts", () => {
                 `${label} must load theme.js before ${script}`
             )
         }
+    })
+
+    it("content script resolves clicks that start inside a shadow tree", () => {
+        // `event.target` is retargeted to the shadow host, so `closest("a[href]")`
+        // on it returns null and nav links rendered by web components (Salesforce
+        // hgf-c360nav) were never intercepted. The composed path keeps the anchor.
+        assert.match(contentScript, /function findClickedLink\(event\)/)
+        assert.match(contentScript, /event\.composedPath\(\)/)
+        const handler = contentScript.match(
+            /function handleLinkClick\(event\) \{([\s\S]*?)\n {4}\}/
+        )?.[1]
+        assert.ok(handler, "content.js defines handleLinkClick")
+        assert.match(handler, /findClickedLink\(event\)/)
+    })
+
+    it("claims the earliest capture slot synchronously", () => {
+        // Capture runs outermost-first: a page that stops propagation in its own
+        // window handler must not be able to swallow the click first. The policy
+        // module arrives through an async import, so the listener registered
+        // before it has to be a forwarder — binding after the import resolves
+        // would place it behind every page handler registered meanwhile.
+        const bind = contentScript.indexOf("window.addEventListener(")
+        const importAt = contentScript.indexOf("await import(")
+        assert.ok(bind !== -1, "content.js binds a click listener on window")
+        assert.ok(importAt !== -1, "content.js still imports the policy module")
+        assert.ok(
+            bind < importAt,
+            "the click binding must precede the async policy import"
+        )
+        assert.match(contentScript, /dispatchClick = handleLinkClick/)
+        assert.doesNotMatch(
+            contentScript,
+            /document\.(add|remove)EventListener\("click"/
+        )
+        assert.doesNotMatch(contentScript, /removeEventListener\("click"/)
+    })
+
+    it("reads link URLs through resolveHref, never through .href", () => {
+        // An <a> inside SVG exposes SVGAnimatedString at `.href`, which used to
+        // open `…/[object SVGAnimatedString]/`.
+        assert.doesNotMatch(contentScript, /link\.href/)
+        assert.match(
+            contentScript,
+            /resolveHref\(\s*link\.getAttribute\("href"\),\s*document\.baseURI\s*\)/
+        )
+    })
+
+    it("userscript mirrors the click-resolution hardening", () => {
+        for (const name of ["findClickedLink", "linkUrl"]) {
+            assert.match(
+                userscript,
+                new RegExp(`function ${name}\\(`),
+                `userscript must mirror ${name}`
+            )
+        }
+        assert.match(
+            userscript,
+            /window\.addEventListener\("click", handleLinkClick, true\)/
+        )
+        assert.match(userscript, /if \(!state\.isApplied\) return/)
+        assert.doesNotMatch(userscript, /link\.href/)
     })
 
     it("content script probes the runtime before preventing the default", () => {
