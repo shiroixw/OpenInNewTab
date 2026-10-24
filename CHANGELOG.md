@@ -72,6 +72,14 @@ The format follows [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/
 
 ## Extension
 
+### [1.7.4] — 2026-10-24
+
+#### Fixed
+- Theming no longer depends on matching an inline `style="color-scheme: …"`
+  string. A shared `theme.js` resolves the preference once and publishes it as
+  `data-color-scheme` on `<body>`, which popup.css selects on; `auto` also
+  follows OS changes live instead of only on the next page open.
+
 ### [1.7.3] — 2026-10-23
 
 #### Fixed
