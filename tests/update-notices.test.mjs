@@ -21,9 +21,9 @@ const {
 
 const notifyNotice = {
     showUpdateNotice: true,
-    en: { title: "A title", summary: "A summary" },
-    "zh-CN": { title: "标题", summary: "摘要" },
-    "zh-TW": { title: "標題", summary: "摘要" },
+    en: { title: "A title" },
+    "zh-CN": { title: "标题" },
+    "zh-TW": { title: "標題" },
 }
 
 describe("shipped notices", () => {
@@ -77,11 +77,9 @@ describe("resolveNoticeCopy", () => {
     it("prefers the requested locale and falls back to English", () => {
         assert.deepEqual(resolveNoticeCopy(notifyNotice, "zh-CN"), {
             title: "标题",
-            summary: "摘要",
         })
         assert.deepEqual(resolveNoticeCopy(notifyNotice, "fr"), {
             title: "A title",
-            summary: "A summary",
         })
         assert.equal(resolveNoticeCopy(null, "en"), null)
     })
@@ -121,12 +119,9 @@ describe("validateUpdateNotice", () => {
     it("requires non-empty copy fields", () => {
         const errors = validateUpdateNotice({
             ...notifyNotice,
-            en: { title: "  ", summary: 42 },
+            en: { title: "  " },
         })
-        assert.deepEqual(errors, [
-            "en.title must be a non-empty string",
-            "en.summary must be a non-empty string",
-        ])
+        assert.deepEqual(errors, ["en.title must be a non-empty string"])
     })
 
     it("treats an array locale block as missing", () => {
@@ -147,7 +142,7 @@ describe("shouldShowUpdateNotice", () => {
         assert.equal(
             shouldShowUpdateNotice({
                 ...notifyNotice,
-                en: { title: "", summary: "" },
+                en: { title: "" },
             }),
             false
         )

@@ -2,16 +2,19 @@
  * Update notices — the release taxonomy of the extension.
  *
  * The popup reads this table to decide whether the release that is now running
- * deserves a one-line note plus a link to the full release notes. Only *content*
- * lives here; UI chrome ("Dismiss", "What's new", the Settings toggle) is in
+ * deserves a line in its footer: `v1.8.0 · <title>` plus a link to the full
+ * release notes. One line, because the popup's job is adding a domain — an
+ * explanatory paragraph there is noise. Only *content* lives here; UI chrome
+ * ("Dismiss", "What's new", the Settings toggle) is in
  * `shared/locales/ext/*.json` like every other string.
  *
  * Contract, enforced by `scripts/verify-release-notice.mjs` before packaging
  * and in the release workflow:
  *   - every release has an entry for its exact `manifest.version`;
  *   - `showUpdateNotice: false` = silent release, no copy needed;
- *   - `showUpdateNotice: true` = one note in the popup, copy required in all
- *     three shipped locales, and the user can turn notices off in Settings.
+ *   - `showUpdateNotice: true` = one line in the popup, so `title` is required
+ *     in all three shipped locales and must stay short enough to fit one line,
+ *     and the user can turn notices off in Settings.
  *
  * Add an entry per release; do not delete old ones — the table doubles as the
  * record of which versions talked to the user. A missing entry fails the build
@@ -27,18 +30,12 @@ const UPDATE_NOTICES = {
         showUpdateNotice: true,
         en: {
             title: "Update notes are here",
-            summary:
-                "Releases that change how the extension behaves now say so in a short note, and Settings links to the full release notes.",
         },
         "zh-CN": {
             title: "更新提示已上线",
-            summary:
-                "影响使用方式的版本会在这里显示一小段说明，设置页也新增了完整更新日志的入口。",
         },
         "zh-TW": {
             title: "更新提示已上線",
-            summary:
-                "影響使用方式的版本會在這裡顯示一小段說明，設定頁也新增了完整更新日誌的入口。",
         },
     },
 }
@@ -47,7 +44,7 @@ const UPDATE_NOTICES = {
 const NOTICE_LOCALES = ["en", "zh-CN", "zh-TW"]
 
 /** Copy fields every localized notice needs. */
-const NOTICE_FIELDS = ["title", "summary"]
+const NOTICE_FIELDS = ["title"]
 
 /**
  * Look up the notice for an exact version.
@@ -82,7 +79,7 @@ function listUpdateNoticeVersions() {
  * does not translate.
  * @param {Record<string, any> | null} notice
  * @param {string} locale BCP-47 id, e.g. `zh-CN`
- * @returns {{ title: string, summary: string } | null}
+ * @returns {{ title: string } | null}
  */
 function resolveNoticeCopy(notice, locale) {
     if (!notice || typeof notice !== "object") {
@@ -91,7 +88,7 @@ function resolveNoticeCopy(notice, locale) {
     const candidates = [notice[locale], notice.en]
     for (const copy of candidates) {
         if (copy && typeof copy === "object" && !Array.isArray(copy)) {
-            return { title: copy.title, summary: copy.summary }
+            return { title: copy.title }
         }
     }
     return null

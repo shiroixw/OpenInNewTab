@@ -172,48 +172,39 @@ body {
     color: var(--text-primary);
 }
 
-/* Update notice. A quiet one-liner above the header: it never pushes the
-   whitelist around, and dismissing it is a 16px target, not a dialog. */
-.update-banner {
+/* Release note. One line pinned under the content: the popup exists to add a
+   domain, so the note never sits in front of that. Same form as the Settings
+   footer (version · link), so the two read as one idea. */
+.update-note {
     display: flex;
-    align-items: flex-start;
+    align-items: center;
     gap: 8px;
-    padding: 12px 16px;
+    flex-shrink: 0;
+    padding: 8px 16px;
     background: var(--bg-secondary);
-    border-bottom: 1px solid var(--border-color);
+    border-top: 1px solid var(--border-color);
+    font-size: 12px;
+    color: var(--text-secondary);
 }
 
 /* Beats the UA `[hidden] { display: none }`, which the rule above outranks. */
-.update-banner[hidden] {
+.update-note[hidden] {
     display: none;
 }
 
-.update-banner-body {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
+/* One line, ellipsised: a long title truncates instead of wrapping. */
+.update-note-text {
     flex: 1;
     min-width: 0;
-}
-
-.update-banner-title {
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--text-primary);
-}
-
-.update-banner-summary {
-    font-size: 12px;
-    line-height: 1.5;
-    color: var(--text-secondary);
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
 }
 
 /* Accent shows up in the underline on hover, never in the text colour: teal
    body text only reaches ~3.6:1 on the neutral surface. */
-.update-banner-link {
-    align-self: flex-start;
-    font-size: 12px;
-    font-weight: 500;
+.update-note-link {
+    flex-shrink: 0;
     color: var(--text-primary);
     text-decoration: underline;
     text-decoration-color: color-mix(
@@ -226,17 +217,17 @@ body {
     transition: text-decoration-color 0.15s ease;
 }
 
-.update-banner-link:hover {
+.update-note-link:hover {
     text-decoration-color: var(--color-accent);
 }
 
-.update-banner-close {
+.update-note-close {
     flex-shrink: 0;
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 24px;
-    height: 24px;
+    width: 20px;
+    height: 20px;
     padding: 0;
     background: none;
     border: none;
@@ -246,18 +237,18 @@ body {
     transition: background-color 0.15s ease, color 0.15s ease;
 }
 
-.update-banner-close:hover {
+.update-note-close:hover {
     background: var(--bg-primary);
     color: var(--text-primary);
 }
 
-.update-banner-close .icon {
-    width: 16px;
-    height: 16px;
+.update-note-close .icon {
+    width: 14px;
+    height: 14px;
 }
 
-.update-banner-link:focus-visible,
-.update-banner-close:focus-visible {
+.update-note-link:focus-visible,
+.update-note-close:focus-visible {
     outline: 2px solid var(--color-accent);
     outline-offset: 2px;
 }

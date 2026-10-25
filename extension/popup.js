@@ -152,15 +152,16 @@
     }
 
     /**
-     * Render the banner in the current language: copy from the notice, chrome
-     * strings from the locale pack. Runs on init and on every language switch.
+     * Render the footer line in the current language: `v1.8.0 · <title>` from
+     * the notice, chrome strings from the locale pack. Runs on init and on every
+     * language switch.
      */
-    function syncUpdateBanner() {
-        const closeBtn = document.getElementById("updateBannerClose")
-        closeBtn.title = getText("updateBannerDismiss")
-        closeBtn.setAttribute("aria-label", getText("updateBannerDismiss"))
-        document.getElementById("updateBannerLink").textContent =
-            getText("updateBannerLink")
+    function syncUpdateNote() {
+        const closeBtn = document.getElementById("updateNoteClose")
+        closeBtn.title = getText("updateNoteDismiss")
+        closeBtn.setAttribute("aria-label", getText("updateNoteDismiss"))
+        document.getElementById("updateNoteLink").textContent =
+            getText("updateNoteLink")
 
         if (!currentUpdateNotice) {
             return
@@ -172,18 +173,19 @@
         if (!copy) {
             return
         }
-        document.getElementById("updateBannerTitle").textContent = copy.title
-        document.getElementById("updateBannerSummary").textContent = copy.summary
+        document.getElementById("updateNoteText").textContent =
+            `v${chrome.runtime.getManifest().version} · ${copy.title}`
     }
 
     /**
      * Show the release note for this version — unless the release is silent,
      * the user turned notices off, or they already dismissed this version.
      *
-     * The banner is the whole delivery mechanism: no tab is opened, no badge is
-     * lit. A user who never opens the popup never sees it, which is the point.
+     * The footer line is the whole delivery mechanism: no tab is opened, no
+     * badge is lit, nothing is taken from the user. Whoever never opens the
+     * popup never sees it, which is the point.
      */
-    async function initUpdateBanner() {
+    async function initUpdateNote() {
         const notices = getUpdateNotices()
         if (!notices) {
             return
@@ -214,16 +216,16 @@
         }
 
         currentUpdateNotice = notice
-        syncUpdateBanner()
-        document.getElementById("updateBanner").hidden = false
+        syncUpdateNote()
+        document.getElementById("updateNote").hidden = false
     }
 
     /**
-     * Hide the banner and remember the dismissal for this version only, so the
+     * Hide the note and remember the dismissal for this version only, so the
      * next release gets a fresh chance instead of inheriting this decision.
      */
-    async function dismissUpdateBanner() {
-        document.getElementById("updateBanner").hidden = true
+    async function dismissUpdateNote() {
+        document.getElementById("updateNote").hidden = true
         try {
             await chrome.storage.sync.set({
                 dismissedUpdateNotice: chrome.runtime.getManifest().version,
@@ -284,7 +286,7 @@
         )
         document.getElementById("moreOptionsText").textContent =
             getText("moreSettings")
-        syncUpdateBanner()
+        syncUpdateNote()
 
         // Populate the language select from the shared locale labels
         i18n.fillLanguageSelect(
@@ -771,9 +773,9 @@
 
             // Release note for this version, if any
             document
-                .getElementById("updateBannerClose")
-                .addEventListener("click", dismissUpdateBanner)
-            await initUpdateBanner()
+                .getElementById("updateNoteClose")
+                .addEventListener("click", dismissUpdateNote)
+            await initUpdateNote()
 
             // Set up event listeners
             const quickAddBtn = document.getElementById("quickAddBtn")

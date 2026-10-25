@@ -90,11 +90,11 @@ The format follows [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/
 
 #### Added
 - **Update notes in the popup.** A release that changes how the extension
-  behaves can now say so in a short dismissible note at the top of the popup —
-  what changed, plus a link to the full notes. Nothing opens by itself and no
-  tab is taken over; a release marked silent shows nothing at all. Dismissing a
-  note applies to that version only, and `Settings → Updates` turns the notes
-  off.
+  behaves can now say so in one line at the bottom of the popup —
+  `v1.8.0 · <what changed>` next to a link to the full notes, dismissible, out
+  of the way of the whitelist. Nothing opens by itself and no tab is taken
+  over; a release marked silent shows nothing at all. Dismissing a note applies
+  to that version only, and `Settings → Updates` turns the notes off.
 - **Release notes from Settings.** The options page footer now shows the
   running version next to a `Release notes` link, so the changelog is reachable
   without a detour through the Web Store.

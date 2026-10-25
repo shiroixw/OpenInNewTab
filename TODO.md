@@ -4,7 +4,7 @@
 
 - 扩展 v1.8.0 更新提示（原 P1 "插件更新横幅"）
   - `extension/update-notices.js` 按版本登记 notify / silent；`npm run release:check` 校验"当前版本有登记 + 三语言文案完整 + CHANGELOG 有条目"，并挂在 `pack:extension` 与发布流水线上
-  - 投递方式是 popup 顶部一段可关闭提示，**不新开标签页**；关闭态写 `dismissedUpdateNotice`（按版本），`updateNoticeEnabled: false` 彻底关闭（设置页 `Updates` 开关）
+  - 投递方式是 popup **底部一行**可关闭提示（`v1.8.0 · 一句说明` + 查看更新），不与"当前域名 / 添加"抢动线；**不新开标签页**；关闭态写 `dismissedUpdateNotice`（按版本），`updateNoticeEnabled: false` 彻底关闭（设置页 `Updates` 开关）
   - 三语言分工：UI chrome（关闭 / 查看更新 / 开关文案 / 页脚 Release notes）进 `shared/locales/ext/*.json`；每版本内容留在 `update-notices.js`
   - 设置页页脚新增 `v{version} · Release notes` 常驻入口
 

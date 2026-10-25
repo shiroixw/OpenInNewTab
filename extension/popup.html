@@ -8,39 +8,6 @@
     </head>
     <body>
         <div class="container">
-            <!-- Release note. Rendered only when the running version is marked
-                 as notifiable in update-notices.js and the user has not
-                 dismissed it or turned notices off. -->
-            <div class="update-banner" id="updateBanner" hidden>
-                <div class="update-banner-body">
-                    <span class="update-banner-title" id="updateBannerTitle"
-                        >Updated</span
-                    >
-                    <span class="update-banner-summary" id="updateBannerSummary"
-                        >What changed in this release.</span
-                    >
-                    <a
-                        class="update-banner-link"
-                        id="updateBannerLink"
-                        href="https://github.com/shiroixw/OpenInNewTab/releases"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        >What's new</a
-                    >
-                </div>
-                <button
-                    id="updateBannerClose"
-                    class="update-banner-close"
-                    type="button"
-                    aria-label="Dismiss update note"
-                    title="Dismiss"
-                >
-                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                        <path d="M18 6 6 18M6 6l12 12" />
-                    </svg>
-                </button>
-            </div>
-
             <header class="header">
                 <h1 id="modalTitle">Whitelist Management</h1>
                 <div class="header-buttons">
@@ -88,6 +55,32 @@
                     </div>
                 </div>
             </main>
+
+            <!-- Release note. One line in the footer, shown only when the
+                 running version is marked as notifiable in update-notices.js
+                 and the user has not dismissed it or turned notices off. -->
+            <footer class="update-note" id="updateNote" hidden>
+                <span class="update-note-text" id="updateNoteText"></span>
+                <a
+                    class="update-note-link"
+                    id="updateNoteLink"
+                    href="https://github.com/shiroixw/OpenInNewTab/releases"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    >What's new</a
+                >
+                <button
+                    id="updateNoteClose"
+                    class="update-note-close"
+                    type="button"
+                    aria-label="Dismiss update note"
+                    title="Dismiss"
+                >
+                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M18 6 6 18M6 6l12 12" />
+                    </svg>
+                </button>
+            </footer>
         </div>
 
         <!-- Settings Modal -->
