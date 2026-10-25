@@ -47,9 +47,11 @@
 
 ## 安装
 
-### 方式 1：Chrome Web Store（即将推出）
+### 方式 1：从 Chrome Web Store 安装
 
-扩展程序即将在 Chrome Web Store 上线，敬请期待！
+[**在 Chrome Web Store 获取 Open In New Tab**](https://chromewebstore.google.com/detail/open-in-new-tab/dncofijfkmdpjpidepjjicpmojdecgoo)
+
+一键安装并自动更新，适用于 Chrome、Edge、Brave、Opera 等 Chromium 内核浏览器，无需开启开发者模式。
 
 ### 方式 2：开发者模式安装
 

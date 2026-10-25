@@ -7,6 +7,7 @@
 -   **Chrome 扩展**：原生弹窗、选项页与 content script
 -   **油猴脚本**：Tampermonkey / Greasemonkey 菜单 + 设置模态框
 
+📖 **[官方网站](https://open-in-new-tab.vercel.app/)** | 🧩 **[Chrome Web Store](https://chromewebstore.google.com/detail/open-in-new-tab/dncofijfkmdpjpidepjjicpmojdecgoo)** | 🎯 **[Greasy Fork 脚本](https://greasyfork.org/zh-CN/scripts/551033-open-in-new-tab)** | 🌟 **[在 GitHub 上点赞](https://github.com/shiroixw/OpenInNewTab)**
 
 ## 🎯 白名单模式的工作原理
 
@@ -18,8 +19,6 @@
 4. **易于管理** - 随时通过弹窗界面或菜单命令添加或删除域名
 
 **示例**：如果您将 `github.com` 添加到白名单，GitHub 上的所有链接都会在新标签页中打开。其他网站（如 Google、Twitter 等）将保持不变，除非您也将它们添加到白名单中。
-
-📖 **[官方网站](https://open-in-new-tab.vercel.app/)** | 🎯 **[Greasy Fork 脚本](https://greasyfork.org/zh-CN/scripts/551033-open-in-new-tab)** | 🌟 **[在 GitHub 上点赞](https://github.com/shiroixw/OpenInNewTab)**
 
 ## 项目结构
 
@@ -64,7 +63,7 @@
 ### 🌐 Chrome 扩展版本
 
 -   **适合场景**：生产环境使用、更好的性能、原生浏览器集成
--   **安装方式**：[查看 extension/README.zh-CN.md](extension/README.zh-CN.md#安装) ([English](extension/README.md#installation))
+-   **安装方式**：[Chrome Web Store](https://chromewebstore.google.com/detail/open-in-new-tab/dncofijfkmdpjpidepjjicpmojdecgoo) | [手动安装](extension/README.zh-CN.md#安装) ([English](extension/README.md#installation))
 -   **功能特性**：弹窗界面、自动更新、Web Store 分发
 
 ## 文档

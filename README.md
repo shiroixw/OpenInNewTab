@@ -9,6 +9,7 @@ userscript remains available but is not on the same release track.
 -   **Chrome Extension**: native popup, options page, and content script
 -   **Userscript**: Tampermonkey / Greasemonkey menu + settings modal
 
+📖 **[Official Website](https://open-in-new-tab.vercel.app/)** | 🧩 **[Chrome Web Store](https://chromewebstore.google.com/detail/open-in-new-tab/dncofijfkmdpjpidepjjicpmojdecgoo)** | 🎯 **[Greasy Fork Script](https://greasyfork.org/en/scripts/551033-open-in-new-tab)** | 🌟 **[Star on GitHub](https://github.com/shiroixw/OpenInNewTab)**
 
 ## 🎯 How Whitelist Mode Works
 
@@ -20,8 +21,6 @@ The whitelist-based approach means:
 4. **Easy to manage** - Add or remove domains anytime through the popup interface or menu commands
 
 **Example**: If you add `github.com` to your whitelist, all links on GitHub will open in new tabs. Other websites like Google, Twitter, etc., will remain unchanged unless you also add them to the whitelist.
-
-📖 **[Official Website](https://open-in-new-tab.vercel.app/)** | 🎯 **[Greasy Fork Script](https://greasyfork.org/en/scripts/551033-open-in-new-tab)** | 🌟 **[Star on GitHub](https://github.com/shiroixw/OpenInNewTab)**
 
 ## Project Structure
 
@@ -66,7 +65,7 @@ Choose your preferred version:
 ### 🌐 Chrome Extension Version
 
 -   **Best for**: Production use, better performance, native browser integration
--   **Installation**: [See extension/README.md](extension/README.md#installation) ([中文](extension/README.zh-CN.md#安装))
+-   **Install from**: [Chrome Web Store](https://chromewebstore.google.com/detail/open-in-new-tab/dncofijfkmdpjpidepjjicpmojdecgoo) | [Manual install](extension/README.md#installation) ([中文](extension/README.zh-CN.md#安装))
 -   **Features**: Popup interface, auto-updates, Web Store distribution
 
 ## Documentation
