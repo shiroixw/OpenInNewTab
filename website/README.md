@@ -21,18 +21,43 @@ Restrained, neutral-first aesthetic inspired by Linear / Resend / shadcn.com. En
 -   **Interactive Elements**: Tab switching, smooth scrolling, copy buttons, theme switcher
 -   **Fully Responsive**: Works perfectly on desktop, tablet, and mobile
 -   **Performance Optimized**: Lightweight, fast loading, smooth animations
--   **SEO Friendly**: Proper meta tags and semantic HTML
+-   **Crawlable & Shareable**: Canonical URLs, Open Graph / Twitter Card previews, `robots.txt` and `sitemap.xml`
 
 ## Structure
 
 ```
 website/
 ├── index.html          # Main HTML file (includes <meta name="app-version"> synced from extension manifest)
+├── privacy-policy.html # Privacy policy page (required by the Chrome Web Store listing)
+├── og-image.png        # 1200×630 social share preview (Open Graph / Twitter Card)
+├── robots.txt          # Crawler rules + sitemap pointer
+├── sitemap.xml         # Indexable URLs (clean URLs, no .html)
 ├── styles.css          # All styles with CSS variables
 ├── script.js           # Interactive functionality
 ├── i18n.js             # Translations (AUTO-GENERATED from shared/locales/site/*.json via `npm run i18n:sync`)
 └── README.md           # This file
 ```
+
+## SEO & Social Previews
+
+The site is a two-page static site. Search and sharing metadata is hand-maintained —
+there is no generator, so changes are small and explicit.
+
+-   **Canonical URLs** point at the clean URLs (`/`, `/privacy-policy`), matching
+    `"cleanUrls": true` in `vercel.json`. Never write `.html` in a canonical.
+-   **Open Graph / Twitter Card** tags live in each page's `<head>`. `og:image` must be an
+    absolute URL — relative paths are not resolved by Slack, X, or Reddit.
+    `og-image.png` is derived from `store/promo/promo-marquee-en.png` (scaled to 1200×480
+    and centred on a 1200×630 canvas padded with the source's `#0A0A0A` edge colour).
+-   **`sitemap.xml`** deliberately omits `lastmod` / `changefreq` / `priority`: the first
+    goes stale the moment it is written, and the other two are ignored by Google and Bing.
+
+When adding a page: add a `<link rel="canonical">` plus OG tags to its `<head>`, add a
+`<url>` to `sitemap.xml`, and re-submit the sitemap in Search Console.
+
+Locale is switched client-side on a single URL, so crawlers only ever see the English
+markup. That is a deliberate trade-off — reach for this tool comes from the Chrome Web
+Store and Greasy Fork, not from localized organic search.
 
 Release version shown in the footer is read from `app-version`; bump via `npm run version:bump:ext` (which also syncs the website meta tags). See main [README.md](../README.md#versioning).
 
