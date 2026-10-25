@@ -540,56 +540,86 @@
                 <p class="section-subtitle" data-i18n="screenshotsSubtitle">Modern UI with dark mode support</p>
 
                 <div class="screenshots-grid">
-                    <div class="screenshot-card">
-                        <div class="screenshot-placeholder">
-                            <div class="placeholder-content">
-                                <div class="placeholder-icon">
-                                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                                        <rect x="3" y="3" width="18" height="18" rx="4"/>
-                                        <line x1="8" y1="9" x2="16" y2="9"/>
-                                        <line x1="8" y1="13" x2="14" y2="13"/>
-                                        <circle cx="17" cy="16" r="2" fill="currentColor" stroke="none"/>
-                                    </svg>
-                                </div>
-                                <p data-i18n="screenshotExtensionPopup">Extension Popup</p>
-                                <small data-i18n="screenshotQuickAdd">Quick add current domain</small>
-                            </div>
+                    <figure class="screenshot-card">
+                        <div class="screenshot-frame">
+                            <img
+                                src="screenshots/popup-light.png"
+                                alt="Open In New Tab extension popup in light mode, showing the current domain and a whitelist holding github.com, youtube.com, wikipedia.org and stackoverflow.com"
+                                width="860"
+                                height="800"
+                                loading="lazy"
+                                decoding="async"
+                            />
                         </div>
-                        <p class="screenshot-caption" data-i18n="screenshotCaptionLight">Chrome Extension - Light Mode</p>
+                        <figcaption class="screenshot-caption" data-i18n="screenshotCaptionLight">Chrome Extension - Light Mode</figcaption>
+                    </figure>
+
+                    <figure class="screenshot-card">
+                        <div class="screenshot-frame">
+                            <img
+                                src="screenshots/popup-dark.png"
+                                alt="Open In New Tab extension popup in dark mode, with news.ycombinator.com added to the whitelist"
+                                width="860"
+                                height="800"
+                                loading="lazy"
+                                decoding="async"
+                            />
+                        </div>
+                        <figcaption class="screenshot-caption" data-i18n="screenshotCaptionDark">Chrome Extension - Dark Mode</figcaption>
+                    </figure>
+
+                    <figure class="screenshot-card">
+                        <div class="screenshot-frame">
+                            <img
+                                src="screenshots/settings-light.png"
+                                alt="Open In New Tab settings page with theme, language, background-tab and whitelist import options, plus the four-domain whitelist list"
+                                width="860"
+                                height="800"
+                                loading="lazy"
+                                decoding="async"
+                            />
+                        </div>
+                        <figcaption class="screenshot-caption" data-i18n="screenshotCaptionSettings">Chrome Extension - Settings Page</figcaption>
+                    </figure>
+                </div>
+            </div>
+        </section>
+
+        <!-- FAQ Section -->
+        <section id="faq" class="section faq">
+            <div class="container">
+                <h2 class="section-title" data-i18n="faqTitle">Frequently Asked Questions</h2>
+                <p class="section-subtitle" data-i18n="faqSubtitle">Short answers to what people ask before installing</p>
+
+                <div class="faq-list">
+                    <div class="faq-item">
+                        <h3 data-i18n="faqQ1">What does Open In New Tab do?</h3>
+                        <p data-i18n="faqA1">It forces links on websites you choose to open in a new tab instead of the current one, so the page you are reading stays put. A whitelist decides which domains get this behaviour — nothing else on the web is touched.</p>
                     </div>
 
-                    <div class="screenshot-card">
-                        <div class="screenshot-placeholder">
-                            <div class="placeholder-content">
-                                <div class="placeholder-icon">
-                                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                                        <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/>
-                                    </svg>
-                                </div>
-                                <p data-i18n="screenshotExtensionPopup">Extension Popup</p>
-                                <small data-i18n="screenshotDarkMode">Dark mode enabled</small>
-                            </div>
-                        </div>
-                        <p class="screenshot-caption" data-i18n="screenshotCaptionDark">Chrome Extension - Dark Mode</p>
+                    <div class="faq-item">
+                        <h3 data-i18n="faqQ2">Which browsers are supported?</h3>
+                        <p data-i18n="faqA2">The extension is built for Chrome and other Chromium-based browsers that support Manifest V3 — Edge, Brave, Opera and Vivaldi all work. Firefox and Safari users should install the Tampermonkey userscript version instead.</p>
                     </div>
 
-                    <div class="screenshot-card">
-                        <div class="screenshot-placeholder">
-                            <div class="placeholder-content">
-                                <div class="placeholder-icon">
-                                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                                        <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
-                                        <polyline points="14 2 14 8 20 8"/>
-                                        <line x1="16" y1="13" x2="8" y2="13"/>
-                                        <line x1="16" y1="17" x2="8" y2="17"/>
-                                        <polyline points="10 9 9 9 8 9"/>
-                                    </svg>
-                                </div>
-                                <p data-i18n="screenshotWhitelistManager">Whitelist Manager</p>
-                                <small data-i18n="screenshotModalInterface">Userscript modal interface</small>
-                            </div>
-                        </div>
-                        <p class="screenshot-caption" data-i18n="screenshotCaptionUserscript">Userscript - Modal Interface</p>
+                    <div class="faq-item">
+                        <h3 data-i18n="faqQ3">Does it change behaviour on every website?</h3>
+                        <p data-i18n="faqA3">No. Links are only rewritten on domains you add to the whitelist. Every other site keeps its default behaviour, which keeps the change predictable and avoids breaking layouts you did not opt into.</p>
+                    </div>
+
+                    <div class="faq-item">
+                        <h3 data-i18n="faqQ4">Does it work with links added after the page loads?</h3>
+                        <p data-i18n="faqA4">Yes. A MutationObserver watches for newly inserted links, so content loaded by infinite scroll, a "load more" button or client-side navigation is handled the same way as the initial HTML.</p>
+                    </div>
+
+                    <div class="faq-item">
+                        <h3 data-i18n="faqQ5">Does it collect or send any data?</h3>
+                        <p data-i18n="faqA5">No. Settings and the whitelist are kept in chrome.storage.sync, which stays inside your browser and syncs through your own Chrome account when signed in. There is no analytics, no third-party service and no server of ours involved.</p>
+                    </div>
+
+                    <div class="faq-item">
+                        <h3 data-i18n="faqQ6">Is it free and open source?</h3>
+                        <p data-i18n="faqA6">Yes. It is released under the MIT license and the full source is on GitHub at github.com/shiroixw/OpenInNewTab.</p>
                     </div>
                 </div>
             </div>
