@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    Indexable URLs only. Paths are clean URLs (no .html) because
+    website/vercel.json sets "cleanUrls": true — .html paths 308-redirect.
+
+    Deliberately omitted: <lastmod>, <changefreq>, <priority>.
+    Google and Bing both ignore changefreq/priority, and a hand-maintained
+    <lastmod> goes stale the moment it is written. Add them back only if a
+    script starts generating this file.
+
+    Keep in sync when adding a page: add a <url> here and a <link rel="canonical">
+    in that page's <head>.
+-->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+    <url>
+        <loc>https://open-in-new-tab.vercel.app/</loc>
+    </url>
+    <url>
+        <loc>https://open-in-new-tab.vercel.app/privacy-policy</loc>
+    </url>
+</urlset>
