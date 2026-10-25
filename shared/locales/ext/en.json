@@ -34,7 +34,7 @@
     "linkBehaviorHeading": "Link behavior",
     "updatesHeading": "Updates",
     "updateNoticesLabel": "Update notes",
-    "updateNoticesDesc": "When off, version update notes no longer appear in the popup",
+    "updateNoticesDesc": "When off, update notes are no longer shown",
     "whitelistHeading": "Whitelist Management",
     "importExportLabel": "Import / Export",
     "exportBtnText": "Export",
