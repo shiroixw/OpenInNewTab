@@ -172,6 +172,96 @@ body {
     color: var(--text-primary);
 }
 
+/* Update notice. A quiet one-liner above the header: it never pushes the
+   whitelist around, and dismissing it is a 16px target, not a dialog. */
+.update-banner {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 12px 16px;
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border-color);
+}
+
+/* Beats the UA `[hidden] { display: none }`, which the rule above outranks. */
+.update-banner[hidden] {
+    display: none;
+}
+
+.update-banner-body {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex: 1;
+    min-width: 0;
+}
+
+.update-banner-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.update-banner-summary {
+    font-size: 12px;
+    line-height: 1.5;
+    color: var(--text-secondary);
+}
+
+/* Accent shows up in the underline on hover, never in the text colour: teal
+   body text only reaches ~3.6:1 on the neutral surface. */
+.update-banner-link {
+    align-self: flex-start;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-primary);
+    text-decoration: underline;
+    text-decoration-color: color-mix(
+        in srgb,
+        var(--text-primary) 35%,
+        transparent
+    );
+    text-underline-offset: 2px;
+    border-radius: 6px;
+    transition: text-decoration-color 0.15s ease;
+}
+
+.update-banner-link:hover {
+    text-decoration-color: var(--color-accent);
+}
+
+.update-banner-close {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    background: none;
+    border: none;
+    border-radius: 50%;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.update-banner-close:hover {
+    background: var(--bg-primary);
+    color: var(--text-primary);
+}
+
+.update-banner-close .icon {
+    width: 16px;
+    height: 16px;
+}
+
+.update-banner-link:focus-visible,
+.update-banner-close:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+}
+
 /* Main Content */
 .main-content {
     padding: 24px;

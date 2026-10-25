@@ -7,9 +7,10 @@
         "lint:tsc": "tsc --noEmit",
         "test": "node --test tests/**/*.test.mjs",
         "version:verify": "node scripts/verify-version.mjs",
+        "release:check": "node scripts/verify-release-notice.mjs",
         "version:bump:ext": "node scripts/bump-extension.mjs",
         "version:bump:us": "node scripts/bump-userscript.mjs",
-        "pack:extension": "node scripts/pack-extension.mjs",
+        "pack:extension": "npm run release:check && node scripts/pack-extension.mjs",
         "i18n:sync": "node scripts/sync-locales.mjs",
         "store:screenshots": "node scripts/generate-store-screenshots.mjs",
         "store:shots": "node scripts/generate-store-shots.mjs"

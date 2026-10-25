@@ -140,6 +140,99 @@
         return i18n.getText(key, currentLanguage)
     }
 
+    /** Release note for the running version, when one is active. */
+    let currentUpdateNotice = null
+
+    /**
+     * The namespace published by `update-notices.js`, loaded before this script.
+     * @returns {Object|null}
+     */
+    function getUpdateNotices() {
+        return window.OpenInNewTabUpdateNotices || null
+    }
+
+    /**
+     * Render the banner in the current language: copy from the notice, chrome
+     * strings from the locale pack. Runs on init and on every language switch.
+     */
+    function syncUpdateBanner() {
+        const closeBtn = document.getElementById("updateBannerClose")
+        closeBtn.title = getText("updateBannerDismiss")
+        closeBtn.setAttribute("aria-label", getText("updateBannerDismiss"))
+        document.getElementById("updateBannerLink").textContent =
+            getText("updateBannerLink")
+
+        if (!currentUpdateNotice) {
+            return
+        }
+        const copy = getUpdateNotices().resolveNoticeCopy(
+            currentUpdateNotice,
+            currentLanguage
+        )
+        if (!copy) {
+            return
+        }
+        document.getElementById("updateBannerTitle").textContent = copy.title
+        document.getElementById("updateBannerSummary").textContent = copy.summary
+    }
+
+    /**
+     * Show the release note for this version — unless the release is silent,
+     * the user turned notices off, or they already dismissed this version.
+     *
+     * The banner is the whole delivery mechanism: no tab is opened, no badge is
+     * lit. A user who never opens the popup never sees it, which is the point.
+     */
+    async function initUpdateBanner() {
+        const notices = getUpdateNotices()
+        if (!notices) {
+            return
+        }
+
+        const version = chrome.runtime.getManifest().version
+        const notice = notices.getUpdateNotice(version)
+        if (!notices.shouldShowUpdateNotice(notice)) {
+            return
+        }
+
+        try {
+            const stored = await chrome.storage.sync.get([
+                "updateNoticeEnabled",
+                "dismissedUpdateNotice",
+            ])
+            if (
+                stored.updateNoticeEnabled === false ||
+                stored.dismissedUpdateNotice === version
+            ) {
+                return
+            }
+        } catch (error) {
+            // Storage is the only gate that can fail here. Stay quiet rather
+            // than showing a note the user may have opted out of.
+            console.error("Error reading update notice preferences:", error)
+            return
+        }
+
+        currentUpdateNotice = notice
+        syncUpdateBanner()
+        document.getElementById("updateBanner").hidden = false
+    }
+
+    /**
+     * Hide the banner and remember the dismissal for this version only, so the
+     * next release gets a fresh chance instead of inheriting this decision.
+     */
+    async function dismissUpdateBanner() {
+        document.getElementById("updateBanner").hidden = true
+        try {
+            await chrome.storage.sync.set({
+                dismissedUpdateNotice: chrome.runtime.getManifest().version,
+            })
+        } catch (error) {
+            console.error("Error saving update notice dismissal:", error)
+        }
+    }
+
     /**
      * Update UI language
      */
@@ -191,6 +284,7 @@
         )
         document.getElementById("moreOptionsText").textContent =
             getText("moreSettings")
+        syncUpdateBanner()
 
         // Populate the language select from the shared locale labels
         i18n.fillLanguageSelect(
@@ -674,6 +768,12 @@
 
             // Initialize settings modal
             initializeSettingsModal()
+
+            // Release note for this version, if any
+            document
+                .getElementById("updateBannerClose")
+                .addEventListener("click", dismissUpdateBanner)
+            await initUpdateBanner()
 
             // Set up event listeners
             const quickAddBtn = document.getElementById("quickAddBtn")

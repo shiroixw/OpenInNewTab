@@ -134,6 +134,42 @@
                     </div>
                 </section>
 
+                <!-- Updates -->
+                <section class="settings-section">
+                    <h2 class="section-heading" id="updatesHeading">Updates</h2>
+                    <div class="settings-card">
+                        <div class="setting-row">
+                            <div class="setting-info">
+                                <label
+                                    class="setting-title"
+                                    for="updateNoticeToggle"
+                                    id="updateNoticesLabel"
+                                    >Update notes</label
+                                >
+                                <span
+                                    class="setting-description"
+                                    id="updateNoticesDesc"
+                                    >Show a one-line note in the popup when a
+                                    release changes how the extension
+                                    behaves</span
+                                >
+                            </div>
+                            <label class="toggle-switch" title="Update notes">
+                                <input
+                                    type="checkbox"
+                                    id="updateNoticeToggle"
+                                    aria-label="Update notes"
+                                    aria-describedby="updateNoticesDesc"
+                                />
+                                <span
+                                    class="toggle-slider"
+                                    aria-hidden="true"
+                                ></span>
+                            </label>
+                        </div>
+                    </div>
+                </section>
+
                 <!-- Whitelist Management Section -->
                 <section class="settings-section">
                     <h2 class="section-heading" id="whitelistHeading">
@@ -206,6 +242,15 @@
             <footer class="options-footer">
                 <div class="footer-content">
                     <span id="footerText"></span>
+                    <span class="footer-sep" aria-hidden="true">·</span>
+                    <a
+                        class="footer-link"
+                        id="releaseNotesLink"
+                        href="https://github.com/shiroixw/OpenInNewTab/releases"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        >Release notes</a
+                    >
                 </div>
             </footer>
         </div>

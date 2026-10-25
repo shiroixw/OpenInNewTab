@@ -44,6 +44,7 @@
 -   **国际化**：根据浏览器设置自动检测语言（English / 简体中文 / 繁體中文）
 -   **后台打开**（可选）：新标签在后台打开，不抢走当前页焦点
 -   **欢迎引导**：首次安装时自动打开欢迎页，介绍白名单模式并引导完成首次设置
+-   **更新提示**：改变使用方式的版本会在弹窗顶部显示一段可关闭的说明，并附上完整更新日志的链接；无感版本不打扰，不会自动打开任何标签页，可在 `设置 → 更新` 中关闭
 
 ## 安装
 
@@ -91,6 +92,12 @@
 ### 后台打开新标签
 
 在弹窗 **设置**（齿轮）或 **选项页** 中开启 **在后台打开新标签**。白名单站点上普通左键点击链接会在后台开新标签，不切换焦点。Ctrl/Cmd/Shift 及中键点击不会被拦截。
+
+### 更新提示
+
+每个版本在 [`update-notices.js`](./update-notices.js) 里登记一次：`showUpdateNotice: false` 表示无感发布，`showUpdateNotice: true` 表示要在弹窗里说明一句，此时必须补齐三种语言的文案。无论哪种，设置页页脚都常驻更新日志入口。
+
+`npm run release:check` 负责另一半约束——被打包的版本必须有登记、登记必须完整、且 `CHANGELOG.md` 里有对应条目。它挂在 `npm run pack:extension` 与发布流水线里，所以不会出现"发了版却没人解释"的情况。关闭弹窗内的提示会写入 `dismissedUpdateNotice`（只对该版本生效）；`updateNoticeEnabled: false` 则彻底关闭。
 
 ### 本地测试
 
@@ -155,6 +162,7 @@
 ├── manifest.json          # 扩展清单 (Manifest V3)
 ├── background.js          # Service worker
 ├── content.js             # 内容脚本（链接修改逻辑）
+├── update-notices.js      # 按版本登记的更新提示，弹窗读取
 ├── popup.html             # 弹窗界面
 ├── popup.js               # 弹窗功能
 ├── popup.css              # 弹窗样式（支持暗色模式）
@@ -177,6 +185,7 @@
 -   **manifest.json**：定义扩展元数据、权限和结构
 -   **background.js**：Service worker，用于扩展生命周期管理
 -   **content.js**：注入到网页中以修改链接行为
+-   **update-notices.js**：弹窗顶部更新提示背后的版本登记表，打包前由 `npm run release:check` 校验
 -   **popup.html/js/css**：白名单管理的用户界面
 -   **options.html/js/css**：完整的设置和配置页面
 -   **welcome.html/js/css**：首次安装后展示一次的欢迎引导页

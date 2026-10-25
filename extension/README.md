@@ -44,6 +44,7 @@ You can also manually add domains by typing them in the input field (e.g., `stac
 -   **Internationalization**: Automatic language detection (English / 简体中文 / 繁體中文) based on browser settings
 -   **Open in background** (optional): New tabs open without stealing focus from the current page
 -   **Onboarding**: A welcome page opens on first install to explain whitelist mode and guide first-time setup
+-   **Update notes**: A release that changes how the extension behaves says so in a dismissible note at the top of the popup, with a link to the full release notes. Silent releases stay silent, nothing is opened automatically, and `Settings → Updates` turns the notes off
 
 ## Installation
 
@@ -91,6 +92,12 @@ The extension comes with an empty default whitelist. Users can add domains throu
 ### Open in background
 
 In the popup **Settings** (gear icon) or on the **Options** page, enable **Open in background**. On whitelisted sites, ordinary left-clicks on links open a new tab without switching focus. Modifier clicks (Ctrl/Cmd/Shift) and middle-click are not intercepted.
+
+### Update notes
+
+Releases are classified once, in [`update-notices.js`](./update-notices.js): an entry with `showUpdateNotice: false` is silent, an entry with `showUpdateNotice: true` carries a short title and summary in each shipped locale and shows up as a banner in the popup for that version only. The Settings footer always links to the release notes, whatever the classification.
+
+`npm run release:check` enforces the other half of the contract — the version being packaged must have an entry, the entry must be complete, and `CHANGELOG.md` must document it. It runs as part of `npm run pack:extension` and in the release workflow, so a release cannot ship unexplained. Dismissing a banner records `dismissedUpdateNotice` for that version; `updateNoticeEnabled: false` turns notices off entirely.
 
 ### Local testing
 
@@ -155,6 +162,7 @@ The extension supports both exact domain matching and subdomain matching:
 ├── manifest.json          # Extension manifest (Manifest V3)
 ├── background.js          # Service worker
 ├── content.js             # Content script (link modification logic)
+├── update-notices.js      # Per-release notice table, read by the popup
 ├── popup.html             # Popup interface
 ├── popup.js               # Popup functionality
 ├── popup.css              # Popup styling with dark mode support
@@ -177,6 +185,7 @@ The extension supports both exact domain matching and subdomain matching:
 -   **manifest.json**: Defines extension metadata, permissions, and structure
 -   **background.js**: Service worker for extension lifecycle management
 -   **content.js**: Injected into web pages to modify link behavior
+-   **update-notices.js**: The release table behind the popup banner; validated by `npm run release:check` before packaging
 -   **popup.html/js/css**: User interface for whitelist management
 -   **options.html/js/css**: Full settings and configuration page
 -   **welcome.html/js/css**: First-run onboarding shown once after install
