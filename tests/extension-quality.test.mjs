@@ -201,6 +201,17 @@ describe("extension quality contracts", () => {
         assert.match(optionsScript, /updateNoticeEnabled/)
     })
 
+    it("the notice preview renders the shipped banner, not a copy of it", () => {
+        // dev/notice-preview.html fetches the real popup.html / options.html
+        // nodes. A hand-copied banner there would silently drift from what
+        // ships, which is the one thing a preview must never do.
+        const preview = readFileSync(join(root, "dev/notice-preview.html"), "utf8")
+        assert.doesNotMatch(preview, /id="updateBanner"/)
+        assert.doesNotMatch(preview, /class="update-banner/)
+        assert.match(preview, /extension\/popup\.html/)
+        assert.match(preview, /extension\/options\.html/)
+    })
+
     it("every extension page links to the release notes", () => {
         for (const [label, html] of [
             ["popup.html", popupHtml],

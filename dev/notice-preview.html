@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Update notice preview — Open In New Tab</title>
+        <!--
+            Real extension stylesheet. options.css @imports popup.css, so both
+            previewed surfaces use the tokens they ship with — no copies here.
+        -->
+        <link rel="stylesheet" href="../extension/options.css" />
+        <style>
+            /* Harness chrome only. Everything below the "STAGE" markers is the
+               shipped markup, untouched. */
+            body {
+                width: 100%;
+                min-height: 100vh;
+                padding: 32px 24px 64px;
+            }
+
+            .preview {
+                display: flex;
+                flex-direction: column;
+                gap: 24px;
+                max-width: 920px;
+                margin: 0 auto;
+            }
+
+            .preview h1 {
+                margin: 0;
+                font-size: 20px;
+                font-weight: 600;
+                color: var(--text-primary);
+            }
+
+            .lede {
+                margin: 0;
+                font-size: 13px;
+                line-height: 1.7;
+                color: var(--text-secondary);
+            }
+
+            .lede code {
+                padding: 1px 5px;
+                border: 1px solid var(--border-color);
+                border-radius: 6px;
+                background: var(--bg-secondary);
+                color: var(--text-primary);
+                font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+                font-size: 12px;
+            }
+
+            .controls {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 16px;
+                padding: 16px;
+                background: var(--bg-secondary);
+                border: 1px solid var(--border-color);
+                border-radius: 12px;
+            }
+
+            .controls label {
+                display: flex;
+                flex-direction: column;
+                gap: 6px;
+                font-size: 12px;
+                font-weight: 500;
+                color: var(--text-secondary);
+            }
+
+            .controls select {
+                padding: 6px 8px;
+                background: var(--bg-primary);
+                color: var(--text-primary);
+                border: 1px solid var(--border-color);
+                border-radius: 8px;
+                font-family: inherit;
+                font-size: 13px;
+            }
+
+            .controls select:focus-visible {
+                outline: 2px solid var(--color-accent);
+                outline-offset: 2px;
+            }
+
+            .stage h2 {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                margin: 0 0 8px;
+                font-size: 13px;
+                font-weight: 600;
+                color: var(--text-secondary);
+            }
+
+            .tag {
+                padding: 1px 6px;
+                border: 1px solid var(--border-color);
+                border-radius: 6px;
+                font-size: 11px;
+                font-weight: 500;
+                color: var(--text-secondary);
+            }
+
+            /* STAGE: popup surface (400px, the width the popup window uses). */
+            .popup-frame {
+                width: 400px;
+                overflow: hidden;
+                background: var(--bg-primary);
+                border: 1px solid var(--border-color);
+                border-radius: 12px;
+            }
+
+            /* Stand-in for the popup body; the real header is sticky. */
+            .mock-header {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                padding: 20px 24px;
+                background: var(--bg-secondary);
+                border-bottom: 1px solid var(--border-color);
+                font-size: 18px;
+                font-weight: 600;
+                color: var(--text-primary);
+            }
+
+            /* STAGE: options footer. */
+            .footer-frame {
+                background: var(--bg-secondary);
+                border: 1px solid var(--border-color);
+                border-radius: 12px;
+                overflow: hidden;
+            }
+
+            .footer-frame .options-footer {
+                margin-top: 0;
+            }
+
+            .note {
+                margin: 8px 0 0;
+                font-size: 12px;
+                line-height: 1.6;
+                color: var(--text-secondary);
+            }
+
+            .note.is-error {
+                color: var(--color-accent);
+            }
+        </style>
+    </head>
+    <body>
+        <main class="preview">
+            <h1>Update notice preview</h1>
+            <p class="lede">
+                Renders the shipped <code>#updateBanner</code> from
+                <code>extension/popup.html</code> and the shipped
+                <code>.options-footer</code> from
+                <code>extension/options.html</code>, using the real stylesheet,
+                locale pack and <code>update-notices.js</code>.
+            </p>
+            <p class="lede">
+                Serve the repo root — the harness fetches
+                <code>../extension/*</code>:
+                <code>npx http-server . -p 8765</code>, then open
+                <code>/dev/notice-preview.html</code>. Nothing here is packaged
+                into the extension.
+            </p>
+
+            <div class="controls">
+                <label>
+                    Version
+                    <select id="versionSelect" data-state-key="version"></select>
+                </label>
+                <label>
+                    Language
+                    <select
+                        id="languageSelect"
+                        data-state-key="language"
+                    ></select>
+                </label>
+                <label>
+                    State
+                    <select id="stateSelect" data-state-key="mode">
+                        <option value="notice">notify — note visible</option>
+                        <option value="dismissed">
+                            dismissed — dismissedUpdateNotice = this version
+                        </option>
+                        <option value="off">
+                            disabled — updateNoticeEnabled: false
+                        </option>
+                        <option value="silent">
+                            silent — showUpdateNotice: false
+                        </option>
+                    </select>
+                </label>
+                <label>
+                    Theme
+                    <select id="themeSelect" data-state-key="theme">
+                        <option value="auto">auto</option>
+                        <option value="light">light</option>
+                        <option value="dark">dark</option>
+                    </select>
+                </label>
+            </div>
+
+            <section class="stage">
+                <h2>Popup <span class="tag">400px wide</span></h2>
+                <div class="popup-frame" id="popupFrame"></div>
+                <p class="note" id="popupNote"></p>
+            </section>
+
+            <section class="stage">
+                <h2>Settings footer</h2>
+                <div class="footer-frame" id="footerFrame"></div>
+                <p class="note">
+                    Always present, whatever the release is classified as.
+                </p>
+            </section>
+        </main>
+
+        <script src="../extension/theme.js"></script>
+        <script src="../extension/i18n-bundle.js"></script>
+        <script src="../extension/update-notices.js"></script>
+        <script src="notice-preview.js"></script>
+    </body>
+</html>

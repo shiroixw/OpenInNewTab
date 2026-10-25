@@ -76,6 +76,16 @@ export default [
         },
     },
     {
+        // dev/*.js are the classic scripts behind the dev harness pages
+        // (fixture, notice preview). They run in a browser page, not in Node.
+        files: ["dev/**/*.js"],
+        languageOptions: {
+            ecmaVersion: "latest",
+            sourceType: "script",
+            globals: { ...globals.browser },
+        },
+    },
+    {
         // store/_mock/*.js are the classic scripts behind the mock HTML used to
         // render store graphics. They run in a browser page, not in Node.
         files: ["store/**/*.js"],

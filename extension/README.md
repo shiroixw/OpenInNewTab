@@ -101,9 +101,10 @@ Releases are classified once, in [`update-notices.js`](./update-notices.js): an 
 
 ### Local testing
 
-1. Serve the fixture page, e.g. `npx http-server dev -p 8765` from the repo root.
-2. Open `http://127.0.0.1:8765/fixture.html`, add `127.0.0.1` to the whitelist, toggle the setting, and click the sample links.
+1. Serve the repo root, e.g. `npx http-server . -p 8765`.
+2. Open `http://127.0.0.1:8765/dev/fixture.html`, add `127.0.0.1` to the whitelist, toggle the setting, and click the sample links.
 3. The fixture is the regression matrix for click interception: plain, nested, slotted, SVG and late-mounted shadow-DOM links, non-interceptable targets, and a hostile page that tries to preempt the click. Serve it over `http://` — the content script does not match `file://`.
+4. `http://127.0.0.1:8765/dev/notice-preview.html` previews the popup update note and the Settings footer. It lifts the real `#updateBanner` / `.options-footer` nodes out of the extension pages and renders them with the shipped CSS, locale pack and `update-notices.js`, so you can check copy and layout in all three languages, both themes, and every state (visible / dismissed / disabled / silent / unregistered) without releasing anything. The repo root must be the server root, since the page fetches `../extension/*`.
 
 ### User Management
 
