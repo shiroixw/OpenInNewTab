@@ -97,7 +97,7 @@ In the popup **Settings** (gear icon) or on the **Options** page, enable **Open 
 
 Releases are classified once, in [`update-notices.js`](./update-notices.js): an entry with `showUpdateNotice: false` is silent, an entry with `showUpdateNotice: true` carries a one-line title in each shipped locale and shows up in the popup footer for that version only. Keep the title short: the line is ellipsised, not wrapped. The Settings footer always links to the release notes, whatever the classification.
 
-`npm run release:check` enforces the other half of the contract — the version being packaged must have an entry, the entry must be complete, and `CHANGELOG.md` must document it. It runs as part of `npm run pack:extension` and in the release workflow, so a release cannot ship unexplained. Dismissing a banner records `dismissedUpdateNotice` for that version; `updateNoticeEnabled: false` turns notices off entirely.
+`npm run release:check` enforces the other half of the contract — the version being packaged must have an entry, the entry must be complete, and `CHANGELOG.md` must document it. It runs as part of `npm run pack:extension` and in the release workflow, so a release cannot ship unexplained. Dismissing the line records `dismissedUpdateNotice` for that version; `updateNoticeEnabled: false` turns notices off entirely. A fresh install seeds `dismissedUpdateNotice` with the installed version in `background.js`, so a new user is not greeted by an update note for a release they never ran.
 
 ### Local testing
 

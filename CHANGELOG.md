@@ -93,8 +93,10 @@ The format follows [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/
   behaves can now say so in one line at the bottom of the popup —
   `v1.8.0 · <what changed>` next to a link to the full notes, dismissible, out
   of the way of the whitelist. Nothing opens by itself and no tab is taken
-  over; a release marked silent shows nothing at all. Dismissing a note applies
-  to that version only, and `Settings → Updates` turns the notes off.
+  over; a release marked silent shows nothing at all, and a fresh install never
+  sees a note — the welcome page already did the introduction. Dismissing a
+  note applies to that version only, and `Settings → Updates` turns the notes
+  off.
 - **Release notes from Settings.** The options page footer now shows the
   running version next to a `Release notes` link, so the changelog is reachable
   without a detour through the Web Store.

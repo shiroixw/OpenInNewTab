@@ -34,7 +34,7 @@
     "linkBehaviorHeading": "Link behavior",
     "updatesHeading": "Updates",
     "updateNoticesLabel": "Update notes",
-    "updateNoticesDesc": "Show a short note in the popup when a release changes how the extension behaves",
+    "updateNoticesDesc": "When off, version update notes no longer appear in the popup",
     "whitelistHeading": "Whitelist Management",
     "importExportLabel": "Import / Export",
     "exportBtnText": "Export",

@@ -34,7 +34,7 @@
     "linkBehaviorHeading": "連結行為",
     "updatesHeading": "更新",
     "updateNoticesLabel": "更新提示",
-    "updateNoticesDesc": "當版本改變擴充功能的使用方式時，在彈出視窗頂部顯示一小段說明",
+    "updateNoticesDesc": "關閉後不再接收版本更新提示",
     "whitelistHeading": "白名單管理",
     "importExportLabel": "匯入 / 匯出",
     "exportBtnText": "匯出",

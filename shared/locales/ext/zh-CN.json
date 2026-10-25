@@ -34,7 +34,7 @@
     "linkBehaviorHeading": "链接行为",
     "updatesHeading": "更新",
     "updateNoticesLabel": "更新提示",
-    "updateNoticesDesc": "当版本改变插件的使用方式时，在弹窗顶部显示一小段说明",
+    "updateNoticesDesc": "关闭后不再接收版本更新提示",
     "whitelistHeading": "白名单管理",
     "importExportLabel": "导入 / 导出",
     "exportBtnText": "导出",

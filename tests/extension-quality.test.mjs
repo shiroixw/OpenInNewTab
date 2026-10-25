@@ -190,10 +190,13 @@ describe("extension quality contracts", () => {
     })
 
     it("update notes are passive, opt-out and per-version", () => {
-        // The service worker must stay out of it: an update that opens a tab
-        // takes the browser away from whatever the user was doing, which is
-        // how this feature was first designed and why it was never shipped.
-        assert.doesNotMatch(backgroundScript, /update-notice|updateNotice/)
+        // The service worker must never act on an update: no tab, no welcome
+        // page. The note is passive and lives entirely in the popup, which is
+        // the opposite of how this feature was first designed (PR #7) and why
+        // that version never shipped. A future migration handler will have to
+        // delete this assertion deliberately.
+        assert.doesNotMatch(backgroundScript, /OnInstalledReason\.UPDATE/)
+        assert.doesNotMatch(backgroundScript, /update-notices\.js/)
         assert.match(popupScript, /shouldShowUpdateNotice/)
         assert.match(popupScript, /updateNoticeEnabled === false/)
         // Dismissal is keyed by version, so the next release gets a fresh chance.
