@@ -47,9 +47,12 @@ You can also manually add domains by typing them in the input field (e.g., `stac
 
 ## Installation
 
-### Option 1: Chrome Web Store (Coming Soon)
+### Option 1: Install from Chrome Web Store
 
-The extension will be available on Chrome Web Store soon. Stay tuned!
+[**Open In New Tab on the Chrome Web Store**](https://chromewebstore.google.com/detail/open-in-new-tab/dncofijfkmdpjpidepjjicpmojdecgoo)
+
+Installs in one click and updates automatically. Works in Chrome, Edge, Brave, Opera
+and other Chromium-based browsers. No developer mode required.
 
 ### Option 2: Developer Mode Installation
 
