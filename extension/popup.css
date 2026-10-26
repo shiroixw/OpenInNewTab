@@ -172,6 +172,87 @@ body {
     color: var(--text-primary);
 }
 
+/* Release note. One line pinned under the content: the popup exists to add a
+   domain, so the note never sits in front of that. Same form as the Settings
+   footer (version · link), so the two read as one idea. */
+.update-note {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+    padding: 8px 16px;
+    background: var(--bg-secondary);
+    border-top: 1px solid var(--border-color);
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+/* Beats the UA `[hidden] { display: none }`, which the rule above outranks. */
+.update-note[hidden] {
+    display: none;
+}
+
+/* One line, ellipsised: a long title truncates instead of wrapping. */
+.update-note-text {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+/* Accent shows up in the underline on hover, never in the text colour: teal
+   body text only reaches ~3.6:1 on the neutral surface. */
+.update-note-link {
+    flex-shrink: 0;
+    color: var(--text-primary);
+    text-decoration: underline;
+    text-decoration-color: color-mix(
+        in srgb,
+        var(--text-primary) 35%,
+        transparent
+    );
+    text-underline-offset: 2px;
+    border-radius: 6px;
+    transition: text-decoration-color 0.15s ease;
+}
+
+.update-note-link:hover {
+    text-decoration-color: var(--color-accent);
+}
+
+.update-note-close {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    padding: 0;
+    background: none;
+    border: none;
+    border-radius: 50%;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.update-note-close:hover {
+    background: var(--bg-primary);
+    color: var(--text-primary);
+}
+
+.update-note-close .icon {
+    width: 14px;
+    height: 14px;
+}
+
+.update-note-link:focus-visible,
+.update-note-close:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+}
+
 /* Main Content */
 .main-content {
     padding: 24px;

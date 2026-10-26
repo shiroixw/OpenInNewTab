@@ -118,6 +118,34 @@
         }
     }
 
+    /**
+     * Update notes are opt-out: a missing key means "on", so existing installs
+     * inherit the default without a migration.
+     * @returns {Promise<boolean>}
+     */
+    async function getUpdateNoticePreference() {
+        try {
+            const result = await chrome.storage.sync.get([
+                "updateNoticeEnabled",
+            ])
+            return result.updateNoticeEnabled !== false
+        } catch (error) {
+            console.error("Error getting updateNoticeEnabled:", error)
+            return true
+        }
+    }
+
+    /**
+     * @param {boolean} enabled
+     */
+    async function setUpdateNoticePreference(enabled) {
+        try {
+            await chrome.storage.sync.set({ updateNoticeEnabled: enabled })
+        } catch (error) {
+            console.error("Error saving updateNoticeEnabled:", error)
+        }
+    }
+
 
     /**
      * Get text by language
@@ -169,6 +197,22 @@
         openInBackgroundToggle.closest(".toggle-switch").title = getText(
             "openInBackgroundLabel"
         )
+        document.getElementById("updatesHeading").textContent =
+            getText("updatesHeading")
+        document.getElementById("updateNoticesLabel").textContent =
+            getText("updateNoticesLabel")
+        document.getElementById("updateNoticesDesc").textContent =
+            getText("updateNoticesDesc")
+        const updateNoticeToggle = document.getElementById("updateNoticeToggle")
+        updateNoticeToggle.setAttribute(
+            "aria-label",
+            getText("updateNoticesLabel")
+        )
+        updateNoticeToggle.closest(".toggle-switch").title = getText(
+            "updateNoticesLabel"
+        )
+        document.getElementById("releaseNotesLink").textContent =
+            getText("releaseNotesLink")
         document.getElementById("whitelistHeading").textContent =
             getText("whitelistHeading")
         document.getElementById("importExportLabel").textContent =
@@ -574,6 +618,14 @@
                 await setOpenInBackgroundPreference(
                     openInBackgroundToggle.checked
                 )
+            })
+
+            const updateNoticeToggle = document.getElementById(
+                "updateNoticeToggle"
+            )
+            updateNoticeToggle.checked = await getUpdateNoticePreference()
+            updateNoticeToggle.addEventListener("change", async () => {
+                await setUpdateNoticePreference(updateNoticeToggle.checked)
             })
 
 

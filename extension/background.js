@@ -12,7 +12,7 @@ chrome.runtime.onInstalled.addListener((details) => {
 
     if (details.reason === chrome.runtime.OnInstalledReason.INSTALL) {
         chrome.storage.sync.get(
-            ["userWhitelist", "openInBackground"],
+            ["userWhitelist", "openInBackground", "dismissedUpdateNotice"],
             (result) => {
                 const updates = {}
                 if (!result.userWhitelist) {
@@ -20,6 +20,13 @@ chrome.runtime.onInstalled.addListener((details) => {
                 }
                 if (result.openInBackground === undefined) {
                     updates.openInBackground = false
+                }
+                // A fresh install is not an upgrade: the welcome page already
+                // introduced the extension, so the popup must not greet the
+                // user with an "update note" for a version they never had.
+                if (result.dismissedUpdateNotice === undefined) {
+                    updates.dismissedUpdateNotice =
+                        chrome.runtime.getManifest().version
                 }
                 if (Object.keys(updates).length > 0) {
                     chrome.storage.sync.set(updates)

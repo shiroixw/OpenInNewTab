@@ -8,6 +8,10 @@ const root = join(dirname(fileURLToPath(import.meta.url)), "..")
 const popupScript = readFileSync(join(root, "extension/popup.js"), "utf8")
 const optionsScript = readFileSync(join(root, "extension/options.js"), "utf8")
 const contentScript = readFileSync(join(root, "extension/content.js"), "utf8")
+const backgroundScript = readFileSync(
+    join(root, "extension/background.js"),
+    "utf8"
+)
 const welcomeScript = readFileSync(join(root, "extension/welcome.js"), "utf8")
 const userscript = readFileSync(
     join(root, "userscript/OpenInNewTab.user.js"),
@@ -171,6 +175,44 @@ describe("extension quality contracts", () => {
             assert.ok(
                 themeTag < scriptTag,
                 `${label} must load theme.js before ${script}`
+            )
+        }
+    })
+
+    it("popup loads the release table before its own script", () => {
+        const noticesTag = popupHtml.indexOf('src="update-notices.js"')
+        const popupTag = popupHtml.indexOf('src="popup.js"')
+        assert.ok(noticesTag !== -1, "popup.html must load update-notices.js")
+        assert.ok(
+            noticesTag < popupTag,
+            "popup.html must load update-notices.js before popup.js"
+        )
+    })
+
+    it("update notes are passive, opt-out and per-version", () => {
+        // The service worker must never act on an update: no tab, no welcome
+        // page. The note is passive and lives entirely in the popup, which is
+        // the opposite of how this feature was first designed (PR #7) and why
+        // that version never shipped. A future migration handler will have to
+        // delete this assertion deliberately.
+        assert.doesNotMatch(backgroundScript, /OnInstalledReason\.UPDATE/)
+        assert.doesNotMatch(backgroundScript, /update-notices\.js/)
+        assert.match(popupScript, /shouldShowUpdateNotice/)
+        assert.match(popupScript, /updateNoticeEnabled === false/)
+        // Dismissal is keyed by version, so the next release gets a fresh chance.
+        assert.match(popupScript, /dismissedUpdateNotice:\s*chrome\.runtime/)
+        assert.match(optionsScript, /updateNoticeEnabled/)
+    })
+
+    it("every extension page links to the release notes", () => {
+        for (const [label, html] of [
+            ["popup.html", popupHtml],
+            ["options.html", optionsHtml],
+        ]) {
+            assert.match(
+                html,
+                /href="https:\/\/github\.com\/shiroixw\/OpenInNewTab\/releases"/,
+                `${label} must link to the release notes`
             )
         }
     })

@@ -86,6 +86,26 @@ The format follows [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/
 
 ## Extension
 
+### [1.8.0] — 2026-10-25
+
+#### Added
+- **Update notes in the popup.** A release that changes how the extension
+  behaves can now say so in one line at the bottom of the popup —
+  `v1.8.0 · <what changed>` next to a link to the full notes, dismissible, out
+  of the way of the whitelist. Nothing opens by itself and no tab is taken
+  over; a release marked silent shows nothing at all, and a fresh install never
+  sees a note — the welcome page already did the introduction. Dismissing a
+  note applies to that version only, and `Settings → Updates` turns the notes
+  off.
+- **Release notes from Settings.** The options page footer now shows the
+  running version next to a `Release notes` link, so the changelog is reachable
+  without a detour through the Web Store.
+- `extension/update-notices.js` records one entry per release, `notify` or
+  `silent`. `npm run release:check` — part of `npm run pack:extension` and the
+  release workflow — fails the build when the version being packaged has no
+  entry, when its copy is incomplete in any of the three shipped locales, or
+  when `CHANGELOG.md` does not document it.
+
 ### [1.7.5] — 2026-10-24
 
 #### Fixed

@@ -269,6 +269,34 @@ body {
     color: var(--text-secondary);
 }
 
+.footer-sep {
+    margin: 0 8px;
+}
+
+/* Accent only on the underline: teal body text sits at ~3.6:1 on the neutral
+   surface, and the link has to stay legible without shouting. */
+.footer-link {
+    color: var(--text-primary);
+    text-decoration: underline;
+    text-decoration-color: color-mix(
+        in srgb,
+        var(--text-primary) 35%,
+        transparent
+    );
+    text-underline-offset: 2px;
+    border-radius: 6px;
+    transition: text-decoration-color 0.15s ease;
+}
+
+.footer-link:hover {
+    text-decoration-color: var(--color-accent);
+}
+
+.footer-link:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+}
+
 /* Scrollbar for domains list */
 .domains-list::-webkit-scrollbar {
     width: 8px;

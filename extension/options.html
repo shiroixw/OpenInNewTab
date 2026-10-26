@@ -134,6 +134,52 @@
                     </div>
                 </section>
 
+                <!-- Updates -->
+                <section class="settings-section">
+                    <h2 class="section-heading" id="updatesHeading">Updates</h2>
+                    <div class="settings-card">
+                        <div class="setting-row">
+                            <div class="setting-info">
+                                <div class="setting-copy">
+                                    <label
+                                        class="setting-title"
+                                        for="updateNoticeToggle"
+                                        id="updateNoticesLabel"
+                                        >Update notes</label
+                                    >
+                                    <span class="setting-hint">
+                                        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                            <circle cx="12" cy="12" r="10" />
+                                            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+                                            <path d="M12 17h.01" />
+                                        </svg>
+                                        <span
+                                            class="setting-hint-tooltip"
+                                            role="tooltip"
+                                            id="updateNoticesDesc"
+                                            >Show one line in the popup footer
+                                            when a release changes how the
+                                            extension behaves</span
+                                        >
+                                    </span>
+                                </div>
+                            </div>
+                            <label class="toggle-switch" title="Update notes">
+                                <input
+                                    type="checkbox"
+                                    id="updateNoticeToggle"
+                                    aria-label="Update notes"
+                                    aria-describedby="updateNoticesDesc"
+                                />
+                                <span
+                                    class="toggle-slider"
+                                    aria-hidden="true"
+                                ></span>
+                            </label>
+                        </div>
+                    </div>
+                </section>
+
                 <!-- Whitelist Management Section -->
                 <section class="settings-section">
                     <h2 class="section-heading" id="whitelistHeading">
@@ -206,6 +252,15 @@
             <footer class="options-footer">
                 <div class="footer-content">
                     <span id="footerText"></span>
+                    <span class="footer-sep" aria-hidden="true">·</span>
+                    <a
+                        class="footer-link"
+                        id="releaseNotesLink"
+                        href="https://github.com/shiroixw/OpenInNewTab/releases"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        >Release notes</a
+                    >
                 </div>
             </footer>
         </div>
