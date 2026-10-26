@@ -22,6 +22,8 @@ Restrained, neutral-first aesthetic inspired by Linear / Resend / shadcn.com. En
 -   **Fully Responsive**: Works perfectly on desktop, tablet, and mobile
 -   **Performance Optimized**: Lightweight, fast loading, smooth animations
 -   **Crawlable & Shareable**: Canonical URLs, Open Graph / Twitter Card previews, `robots.txt` and `sitemap.xml`
+-   **Real UI Previews**: Three captured screenshots of the extension popup and settings page — no mockups, no placeholder tiles
+-   **FAQ Section**: Six plain-text answers. Intentionally *not* marked up with `FAQPage` — Google restricted FAQ rich results to government and health sites in 2023
 
 ## Structure
 
@@ -32,11 +34,21 @@ website/
 ├── og-image.png        # 1200×630 social share preview (Open Graph / Twitter Card)
 ├── robots.txt          # Crawler rules + sitemap pointer
 ├── sitemap.xml         # Indexable URLs (clean URLs, no .html)
+├── screenshots/        # 860×800 UI captures shown in the "Beautiful Interface" grid
 ├── styles.css          # All styles with CSS variables
 ├── script.js           # Interactive functionality
 ├── i18n.js             # Translations (AUTO-GENERATED from shared/locales/site/*.json via `npm run i18n:sync`)
 └── README.md           # This file
 ```
+
+### UI screenshots
+
+`website/screenshots/*.png` are 860×800 crops of the store captures in `store/screenshots/`.
+The same window (`x: 210–1070, y: 0–800` out of the 1280×800 originals) keeps the popup and
+the settings page centred on identical canvases, so the three cards stay in visual register
+regardless of how wide the real UI is. Re-run `npm run store:screenshots` after a UI change,
+then re-crop. They are committed rather than generated at build time so deployment stays
+dependency-free.
 
 ## SEO & Social Previews
 
