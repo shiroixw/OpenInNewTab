@@ -30,7 +30,16 @@
         return policy
     }
 
+    /** Host of the active tab — the quick-add decision keys off it. */
     let currentDomain = ""
+
+    /**
+     * Whether the browser refuses content scripts on the active tab: the Web
+     * Store, `chrome://` internals and other extensions' pages. No whitelist
+     * entry can make the extension run there, so the popup explains the limit
+     * instead of storing a domain that would never take effect.
+     */
+    let currentPageRestricted = false
 
     let currentTheme = "auto"
 
@@ -314,24 +323,48 @@
     }
 
     /**
-     * Get current active tab domain
-     * @returns {Promise<string>} Current domain
+     * Resolve the active tab's host and whether the browser protects it from
+     * content scripts.
+     * @returns {Promise<{ domain: string, restricted: boolean }>}
      */
-    async function getCurrentDomain() {
+    async function getActiveTabTarget() {
         try {
             const [tab] = await chrome.tabs.query({
                 active: true,
                 currentWindow: true,
             })
-            if (tab && tab.url) {
-                const url = new URL(tab.url)
-                return url.hostname
+            if (!tab || !tab.url) {
+                return { domain: "", restricted: false }
             }
-            return ""
+            const { isRestrictedUrl } = await getPolicy()
+            return {
+                domain: new URL(tab.url).hostname,
+                restricted: isRestrictedUrl(tab.url),
+            }
         } catch (error) {
-            console.error("Error getting current domain:", error)
-            return ""
+            // A URL we cannot parse tells us nothing about protection; leaving
+            // the flag off keeps the popup usable rather than silently inert.
+            console.error("Error getting current tab:", error)
+            return { domain: "", restricted: false }
         }
+    }
+
+    /**
+     * Render the protected-page state: a disabled button plus the reason below
+     * it. A disabled button shows no tooltip and takes no focus, so the
+     * explanation cannot live in `title` alone.
+     */
+    function renderRestrictedState() {
+        const quickAddBtn = document.getElementById("quickAddBtn")
+        const hint = document.getElementById("restrictedHint")
+        quickAddBtn.classList.remove("added")
+        quickAddBtn.classList.remove("remove-state")
+        quickAddBtn.disabled = true
+        quickAddBtn.title = getText("restrictedPageHint")
+        document.getElementById("quickAddBtnText").textContent =
+            getText("quickAddUnavailable")
+        hint.textContent = getText("restrictedPageHint")
+        hint.hidden = false
     }
 
     /**
@@ -343,10 +376,19 @@
      * intercepted.
      */
     async function updateQuickAddButton() {
+        if (currentPageRestricted) {
+            renderRestrictedState()
+            return
+        }
+
         const quickAddBtn = document.getElementById("quickAddBtn")
         const quickAddBtnText = document.getElementById("quickAddBtnText")
+        const hint = document.getElementById("restrictedHint")
         const userWhitelist = await getUserWhitelist()
         const { isHostAllowed } = await getPolicy()
+
+        hint.hidden = true
+        hint.textContent = ""
 
         if (currentDomain && isHostAllowed(currentDomain, userWhitelist)) {
             quickAddBtn.classList.add("remove-state")
@@ -369,6 +411,11 @@
      * layout/resize pass) is needed.
      */
     function syncQuickAddLabel() {
+        if (currentPageRestricted) {
+            renderRestrictedState()
+            return
+        }
+
         const quickAddBtn = document.getElementById("quickAddBtn")
         const quickAddBtnText = document.getElementById("quickAddBtnText")
         const removing = quickAddBtn.classList.contains("remove-state")
@@ -384,6 +431,13 @@
      * Handle quick add button click
      */
     async function handleQuickAdd() {
+        // The button is disabled in this state; the guard keeps a programmatic
+        // click from writing an entry that could never apply.
+        if (currentPageRestricted) {
+            showNotification(getText("restrictedPageHint"))
+            return
+        }
+
         if (!currentDomain) {
             showNotification(getText("cannotDetectCurrentDomain"))
             return
@@ -751,8 +805,11 @@
      */
     async function initialize() {
         try {
-            // Get current domain
-            currentDomain = await getCurrentDomain()
+            // Resolve the active tab once: the host labels the card, and the
+            // protection flag decides whether quick-add is offered at all.
+            const target = await getActiveTabTarget()
+            currentDomain = target.domain
+            currentPageRestricted = target.restricted
             document.getElementById("currentDomainValue").textContent =
                 currentDomain || "N/A"
 
