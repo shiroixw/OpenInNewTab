@@ -34,12 +34,15 @@
     let currentDomain = ""
 
     /**
-     * Whether the browser refuses content scripts on the active tab: the Web
-     * Store, `chrome://` internals and other extensions' pages. No whitelist
-     * entry can make the extension run there, so the popup explains the limit
-     * instead of storing a domain that would never take effect.
+     * Whether the content script cannot run on the active tab (protected
+     * scheme, or a live probe with no receiving end). No whitelist entry can
+     * make the extension run there, so the popup explains the limit instead of
+     * storing a domain that would never take effect.
      */
     let currentPageRestricted = false
+
+    /** How long to wait for the content-script ping before failing open. */
+    const CONTENT_SCRIPT_PROBE_TIMEOUT_MS = 200
 
     let currentTheme = "auto"
 
@@ -323,8 +326,48 @@
     }
 
     /**
-     * Resolve the active tab's host and whether the browser protects it from
-     * content scripts.
+     * Ask whether the content script is alive on `tabId`.
+     * @param {number} tabId
+     * @returns {Promise<"alive"|"missing"|"uncertain">}
+     */
+    async function probeContentScript(tabId) {
+        const {
+            CONTENT_SCRIPT_PING,
+            classifyContentScriptProbe,
+        } = await getPolicy()
+        /** @type {ReturnType<typeof setTimeout> | undefined} */
+        let timer
+        try {
+            const response = await Promise.race([
+                chrome.tabs.sendMessage(tabId, {
+                    type: CONTENT_SCRIPT_PING,
+                }),
+                new Promise((_, reject) => {
+                    timer = setTimeout(() => {
+                        reject(new Error("content-script probe timed out"))
+                    }, CONTENT_SCRIPT_PROBE_TIMEOUT_MS)
+                }),
+            ])
+            return classifyContentScriptProbe({ response })
+        } catch (error) {
+            const message =
+                error instanceof Error
+                    ? error.message
+                    : String(error ?? "")
+            return classifyContentScriptProbe({
+                error,
+                timedOut: message.includes("content-script probe timed out"),
+            })
+        } finally {
+            if (timer !== undefined) {
+                clearTimeout(timer)
+            }
+        }
+    }
+
+    /**
+     * Resolve the active tab's host and whether quick-add should be blocked
+     * because the content script cannot run there.
      * @returns {Promise<{ domain: string, restricted: boolean }>}
      */
     async function getActiveTabTarget() {
@@ -333,13 +376,45 @@
                 active: true,
                 currentWindow: true,
             })
-            if (!tab || !tab.url) {
+            if (!tab) {
                 return { domain: "", restricted: false }
             }
-            const { isRestrictedUrl } = await getPolicy()
+
+            // `tab.url` is often omitted for chrome:// pages unless the user
+            // invoked the action (activeTab) or the extension holds the "tabs"
+            // permission. Missing URL must not skip the content-script probe —
+            // a missing receiver is how we still detect those pages.
+            const tabUrl = typeof tab.url === "string" ? tab.url : ""
+
+            let domain = ""
+            if (tabUrl) {
+                try {
+                    domain = new URL(tabUrl).hostname
+                } catch {
+                    // Hostname is cosmetic; restriction still uses the raw URL.
+                }
+            }
+
+            const { isRestrictedUrl, isPageRestrictedForQuickAdd } =
+                await getPolicy()
+
+            // Protected schemes never get a content script — skip the ping.
+            if (tabUrl && isRestrictedUrl(tabUrl)) {
+                return { domain, restricted: true }
+            }
+
+            // No tab id (rare) or a probe that times out: fail open.
+            if (typeof tab.id !== "number") {
+                return { domain, restricted: false }
+            }
+
+            const probe = await probeContentScript(tab.id)
             return {
-                domain: new URL(tab.url).hostname,
-                restricted: isRestrictedUrl(tab.url),
+                domain,
+                restricted: isPageRestrictedForQuickAdd({
+                    url: tabUrl || null,
+                    probe,
+                }),
             }
         } catch (error) {
             // A URL we cannot parse tells us nothing about protection; leaving

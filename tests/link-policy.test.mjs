@@ -1,8 +1,11 @@
 import assert from "node:assert/strict"
 import { describe, it } from "node:test"
 import {
+    CONTENT_SCRIPT_PING,
+    classifyContentScriptProbe,
     findCoveringDomain,
     isHostAllowed,
+    isPageRestrictedForQuickAdd,
     isRestrictedUrl,
     mergeWhitelist,
     normalizeDomain,
@@ -29,22 +32,9 @@ describe("isHostAllowed", () => {
 })
 
 describe("isRestrictedUrl", () => {
-    // Chrome refuses content scripts on these origins, so no whitelist entry
-    // can take effect there; the popup disables quick-add instead.
-    it("flags the Web Store origins, whole host not just /webstore", () => {
-        assert.equal(
-            isRestrictedUrl(
-                "https://chrome.google.com/webstore/devconsole/f7f8a757/edit"
-            ),
-            true
-        )
-        assert.equal(isRestrictedUrl("https://chrome.google.com/robots.txt"), true)
-        assert.equal(
-            isRestrictedUrl("https://chromewebstore.google.com/detail/abc"),
-            true
-        )
-    })
-
+    // Scheme-only fast path. Host denylists rot (Web Store domains change across
+    // Chrome / Edge / Firefox); whether a page can be whitelisted is decided by
+    // a live content-script probe, not by a maintained host list.
     it("flags browser-internal and other-extension schemes", () => {
         for (const url of [
             "chrome://extensions/",
@@ -53,27 +43,146 @@ describe("isRestrictedUrl", () => {
             "devtools://devtools/bundled/inspector.html",
             "view-source:https://example.com",
             "about:blank",
+            "edge://settings/",
+            "chrome-untrusted://new-tab-page/",
         ]) {
             assert.equal(isRestrictedUrl(url), true, `expected restricted: ${url}`)
         }
     })
 
-    it("leaves ordinary and look-alike hosts alone", () => {
+    it("does not treat https hosts as restricted by themselves", () => {
         for (const url of [
             "https://github.com/shiroixw/OpenInNewTab",
             "https://www.google.com/webstore",
+            "https://chrome.google.com/webstore/devconsole/f7f8a757/edit",
+            "https://chrome.google.com/robots.txt",
+            "https://chromewebstore.google.com/detail/abc",
             "https://chrome.google.com.example.com/webstore",
             "http://localhost:8080/",
+            "https://example.com/",
         ]) {
             assert.equal(isRestrictedUrl(url), false, `expected allowed: ${url}`)
         }
     })
 
     it("accepts a URL object and treats empty or unparseable input as allowed", () => {
-        assert.equal(isRestrictedUrl(new URL("https://chrome.google.com/")), true)
+        assert.equal(
+            isRestrictedUrl(new URL("chrome://extensions/")),
+            true
+        )
         for (const value of [null, undefined, "", "not a url"]) {
             assert.equal(isRestrictedUrl(value), false)
         }
+    })
+})
+
+describe("classifyContentScriptProbe", () => {
+    it("reports alive when the content script answers the ping", () => {
+        assert.equal(
+            classifyContentScriptProbe({ response: { ok: true } }),
+            "alive"
+        )
+    })
+
+    it("reports missing when there is no receiving end", () => {
+        assert.equal(
+            classifyContentScriptProbe({
+                error: new Error(
+                    "Could not establish connection. Receiving end does not exist."
+                ),
+            }),
+            "missing"
+        )
+        assert.equal(
+            classifyContentScriptProbe({
+                error: "Could not establish connection. Receiving end does not exist.",
+            }),
+            "missing"
+        )
+    })
+
+    it("reports uncertain on timeout or unfamiliar errors (fail open)", () => {
+        assert.equal(
+            classifyContentScriptProbe({ timedOut: true }),
+            "uncertain"
+        )
+        assert.equal(
+            classifyContentScriptProbe({
+                error: Object.assign(new Error("content-script probe timed out"), {
+                    timedOut: true,
+                }),
+                timedOut: true,
+            }),
+            "uncertain"
+        )
+        assert.equal(
+            classifyContentScriptProbe({
+                error: new Error("Extension context invalidated."),
+            }),
+            "uncertain"
+        )
+        assert.equal(classifyContentScriptProbe({ response: {} }), "uncertain")
+        assert.equal(classifyContentScriptProbe({}), "uncertain")
+    })
+})
+
+describe("isPageRestrictedForQuickAdd", () => {
+    it("blocks on restricted schemes without needing a probe", () => {
+        assert.equal(
+            isPageRestrictedForQuickAdd({
+                url: "chrome://extensions/",
+                probe: "uncertain",
+            }),
+            true
+        )
+    })
+
+    it("blocks when the content script is missing on an ordinary https page", () => {
+        assert.equal(
+            isPageRestrictedForQuickAdd({
+                url: "https://chromewebstore.google.com/detail/abc",
+                probe: "missing",
+            }),
+            true
+        )
+    })
+
+    it("leaves ordinary sites alone when the content script is alive", () => {
+        assert.equal(
+            isPageRestrictedForQuickAdd({
+                url: "https://example.com/",
+                probe: "alive",
+            }),
+            false
+        )
+    })
+
+    it("fails open on probe uncertainty so a still-loading page is not locked out", () => {
+        assert.equal(
+            isPageRestrictedForQuickAdd({
+                url: "https://example.com/",
+                probe: "uncertain",
+            }),
+            false
+        )
+    })
+
+    it("blocks when the URL is hidden but the content script is missing", () => {
+        // chrome:// tabs often omit tab.url without the "tabs" permission; the
+        // probe is still authoritative.
+        assert.equal(
+            isPageRestrictedForQuickAdd({
+                url: null,
+                probe: "missing",
+            }),
+            true
+        )
+    })
+})
+
+describe("CONTENT_SCRIPT_PING", () => {
+    it("exports a stable ping type for popup and content script", () => {
+        assert.equal(CONTENT_SCRIPT_PING, "OINT_PING")
     })
 })
 
