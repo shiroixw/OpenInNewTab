@@ -88,6 +88,12 @@ The format follows [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/
 
 ### [Unreleased]
 
+#### Changed
+- Store and website screenshots now show the v1.8.0 update-notes UI: the popup
+  footer line (`v1.8.0 · …`), `Settings → Updates`, and the options footer
+  `Release notes` link. `npm run store:screenshots` simulates an upgrade so a
+  fresh capture profile still shows the notify-release footer.
+
 #### Fixed
 - The popup no longer offers to whitelist a page the browser protects. Chrome
   never injects content scripts on the Web Store (`chrome.google.com` — listing
