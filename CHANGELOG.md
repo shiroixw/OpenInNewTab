@@ -88,13 +88,20 @@ The format follows [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/
 
 ### [Unreleased]
 
+#### Changed
+- Restricted-page detection for quick-add no longer depends on a maintained
+  host denylist. Protected URL schemes (`chrome:`, `chrome-extension:`, …)
+  remain a fast path; otherwise the popup pings the content script on the
+  active tab and treats a missing receiver as “cannot whitelist.” A short
+  timeout fails open so a still-loading ordinary page is not marked
+  restricted. Existing whitelist rows are never deleted by this check.
+
 #### Fixed
 - The popup no longer offers to whitelist a page the browser protects. Chrome
-  never injects content scripts on the Web Store (`chrome.google.com` — listing
-  pages and the developer console alike — and `chromewebstore.google.com`), on
-  `chrome://` internals or on other extensions' pages, so such an entry could
-  never take effect. Quick-add is now disabled there and the reason is shown
-  inline. Reported against the Web Store developer console.
+  never injects content scripts on pages it owns end to end (Web Store,
+  `chrome://` internals, other extensions' pages, and similar), so such an
+  entry could never take effect. Quick-add is disabled there and the reason is
+  shown inline. Reported against the Web Store developer console.
 
 ### [1.8.0] — 2026-10-25
 

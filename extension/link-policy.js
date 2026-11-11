@@ -83,6 +83,8 @@ export function isHostAllowed(hostname, whitelist) {
 /**
  * Schemes of documents the browser never lets an extension script: internal
  * pages, other extensions' pages, and the viewer wrappers it serves for them.
+ * Kept as a synchronous fast path; host denylists are not used — those rot as
+ * store domains change across Chrome / Edge / Firefox.
  */
 const RESTRICTED_SCHEMES = new Set([
     "about:",
@@ -95,24 +97,20 @@ const RESTRICTED_SCHEMES = new Set([
 ])
 
 /**
- * Hosts whose pages the browser owns end to end. Chrome refuses content
- * scripts on the whole host, not just the `/webstore` path — verified against
- * the developer console (`chrome.google.com/webstore/devconsole/…`), its plain
- * documents, and the newer `chromewebstore.google.com` origin.
+ * Message type the popup sends to ask whether the content script is alive on
+ * the active tab. Kept in this shared module so the probe classifier and the
+ * popup agree on the string; the content script registers the same literal
+ * before its first `await` (classic scripts cannot sync-import this module).
  */
-const RESTRICTED_HOSTS = new Set([
-    "chrome.google.com",
-    "chromewebstore.google.com",
-])
+export const CONTENT_SCRIPT_PING = "OINT_PING"
 
 /**
- * Whether the browser protects this URL from content scripts.
+ * Whether the URL scheme alone proves content scripts cannot run.
  *
- * Nothing a user stores can change this: no whitelist entry makes the content
- * script run there, so the UI has to say so instead of offering an entry that
- * silently never applies. Unparseable input counts as unprotected — a false
- * "restricted" verdict would disable the extension on a real site, which is
- * the worse mistake.
+ * Host-level blocks (Web Store, etc.) are detected at runtime by probing the
+ * content script instead of maintaining a denylist. Unparseable input counts
+ * as unprotected — a false "restricted" verdict would disable the extension on
+ * a real site, which is the worse mistake.
  * @param {string|URL|null|undefined} url
  * @returns {boolean}
  */
@@ -127,10 +125,72 @@ export function isRestrictedUrl(url) {
     } catch {
         return false
     }
-    if (RESTRICTED_SCHEMES.has(parsed.protocol)) {
+    return RESTRICTED_SCHEMES.has(parsed.protocol)
+}
+
+/**
+ * Classify a `chrome.tabs.sendMessage` ping to the content script.
+ *
+ * - `alive` — the content script answered; whitelisting can take effect.
+ * - `missing` — no receiving end; the browser did not inject us, so a
+ *   whitelist entry would never apply.
+ * - `uncertain` — timeout or an unfamiliar error; callers must fail open so a
+ *   still-loading ordinary page is not locked out of quick-add.
+ *
+ * @param {{ response?: unknown, error?: unknown, timedOut?: boolean }} [outcome]
+ * @returns {"alive"|"missing"|"uncertain"}
+ */
+export function classifyContentScriptProbe(outcome = {}) {
+    const { response, error, timedOut } = outcome
+    if (timedOut) {
+        return "uncertain"
+    }
+    if (
+        response &&
+        typeof response === "object" &&
+        /** @type {{ ok?: unknown }} */ (response).ok === true
+    ) {
+        return "alive"
+    }
+    if (error != null) {
+        const message =
+            typeof error === "string"
+                ? error
+                : error instanceof Error
+                  ? error.message
+                  : typeof error === "object" &&
+                      error &&
+                      "message" in error &&
+                      typeof /** @type {{ message?: unknown }} */ (error)
+                          .message === "string"
+                    ? /** @type {{ message: string }} */ (error).message
+                    : String(error)
+        if (
+            /Receiving end does not exist/i.test(message) ||
+            /Could not establish connection/i.test(message)
+        ) {
+            return "missing"
+        }
+        return "uncertain"
+    }
+    return "uncertain"
+}
+
+/**
+ * Whether quick-add should be disabled for the active tab.
+ *
+ * Scheme checks short-circuit; otherwise only a definitive "content script
+ * missing" probe blocks. Uncertainty fails open.
+ *
+ * @param {{ url?: string|URL|null, probe?: "alive"|"missing"|"uncertain" }} [input]
+ * @returns {boolean}
+ */
+export function isPageRestrictedForQuickAdd(input = {}) {
+    const { url, probe = "uncertain" } = input
+    if (isRestrictedUrl(url)) {
         return true
     }
-    return RESTRICTED_HOSTS.has(parsed.hostname.toLowerCase())
+    return probe === "missing"
 }
 
 /**
