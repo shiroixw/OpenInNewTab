@@ -37,6 +37,32 @@ Requires Chrome for Testing or a compatible Chromium build. Set `CHROME_PATH` to
 override the browser path. The script uses a temporary profile and does not
 modify the extension's stored data.
 
+Popup shots simulate an **upgrade** so the v1.8.0 update-notes footer is
+visible: a fresh install seeds `dismissedUpdateNotice` with the running version
+(see `extension/background.js`), which would hide the line. The capture script
+sets that key to a prior version and leaves `updateNoticeEnabled` on, then
+asserts the footer text before writing each popup PNG. Options shots are framed
+at zoom `0.72` so `Settings → Updates` and the footer `Release notes` link both
+fit the 1280×800 canvas.
+
+After regenerating, re-crop the website gallery (860×800, `x: 210–1070`):
+
+```bash
+python3 - <<'PY'
+from pathlib import Path
+from PIL import Image
+store, site = Path("store/screenshots"), Path("website/screenshots")
+for src, dst in [
+    ("popup-light-add.png", "popup-light.png"),
+    ("popup-dark-remove.png", "popup-dark.png"),
+    ("options-light.png", "settings-light.png"),
+]:
+    Image.open(store / src).crop((210, 0, 1070, 800)).convert("RGB").save(
+        site / dst, format="PNG"
+    )
+PY
+```
+
 ## Upload
 
 This repo cannot publish to the Chrome Web Store. In the [Developer Dashboard](https://chrome.google.com/webstore/devconsole):
