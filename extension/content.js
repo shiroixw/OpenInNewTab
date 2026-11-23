@@ -11,6 +11,17 @@
 ;(async () => {
     "use strict"
 
+    // Must match link-policy.js `CONTENT_SCRIPT_PING`. Registered before the
+    // first `await` so the popup can detect us even while the policy module is
+    // still loading — a missing receiver is how we know a page cannot be
+    // whitelisted, so the listener has to exist as soon as the script runs.
+    const MSG_PING = "OINT_PING"
+    chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
+        if (message?.type === MSG_PING) {
+            sendResponse({ ok: true })
+        }
+    })
+
     /**
      * Set once the policy module has loaded. The click listener below is bound
      * before that and has to tolerate the gap.

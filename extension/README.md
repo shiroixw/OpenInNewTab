@@ -149,15 +149,13 @@ The extension supports both exact domain matching and subdomain matching:
 
 ### Pages the browser protects
 
-Chrome refuses to run content scripts on some pages, and no permission can
-change that. On those pages the extension is genuinely inactive, so the popup
-disables quick-add and explains why instead of storing an entry that would never
-apply:
-
--   The Chrome Web Store — the whole of `chrome.google.com` (listing pages and
-    the developer console alike) and `chromewebstore.google.com`
--   Browser-internal pages (`chrome://…`, `about:…`, `view-source:…`)
--   Other extensions' pages (`chrome-extension://…`)
+Chrome refuses to run content scripts on some pages (browser internals, the
+Web Store, other extensions' pages, and anything else it protects), and no
+permission can change that. The popup detects this by asking whether its
+content script is alive on the active tab — protected URL schemes are a fast
+path; otherwise a short ping decides. When the script is not there, quick-add
+is disabled and the reason is shown inline instead of storing an entry that
+would never apply. Existing whitelist rows are left alone.
 
 Links on those pages open exactly as the site intends, in the same tab. The
 rest of the web is unaffected.
