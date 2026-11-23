@@ -278,6 +278,53 @@ describe("extension quality contracts", () => {
         assert.doesNotMatch(userscript, /link\.href/)
     })
 
+    it("does not maintain a host denylist for restricted-page detection", () => {
+        // Host lists rot (Web Store domains already moved; Edge/Firefox differ).
+        // Scheme checks may stay; whether https pages can be whitelisted is
+        // decided by probing the content script.
+        const policy = readFileSync(
+            join(root, "extension/link-policy.js"),
+            "utf8"
+        )
+        assert.doesNotMatch(policy, /RESTRICTED_HOSTS/)
+        assert.doesNotMatch(
+            policy,
+            /chromewebstore\.google\.com/,
+            "link-policy must not hardcode Web Store hosts"
+        )
+        assert.match(policy, /CONTENT_SCRIPT_PING/)
+        assert.match(policy, /classifyContentScriptProbe/)
+        assert.match(policy, /isPageRestrictedForQuickAdd/)
+        assert.match(
+            popupScript,
+            /probeContentScript/,
+            "popup must ping the content script before offering quick-add"
+        )
+        assert.match(
+            popupScript,
+            /isPageRestrictedForQuickAdd/,
+            "popup must combine scheme + probe via the shared policy"
+        )
+    })
+
+    it("content script answers the popup ping before any await", () => {
+        // A missing receiver is how we know a page cannot be whitelisted. The
+        // listener therefore has to exist before the async policy import, or a
+        // still-loading ordinary page would look identical to a protected one.
+        const ping = contentScript.indexOf('MSG_PING = "OINT_PING"')
+        const listener = contentScript.indexOf(
+            "chrome.runtime.onMessage.addListener"
+        )
+        const importAt = contentScript.indexOf("await import(")
+        assert.ok(ping !== -1, "content.js must define the OINT_PING constant")
+        assert.ok(listener !== -1, "content.js must listen for the popup ping")
+        assert.ok(importAt !== -1, "content.js still imports the policy module")
+        assert.ok(
+            ping < listener && listener < importAt,
+            "the ping listener must register before the first await import"
+        )
+    })
+
     it("content script probes the runtime before preventing the default", () => {
         // A content script outlives an extension reload/update. Once its context
         // is invalidated, chrome.runtime throws and the service worker is gone —
