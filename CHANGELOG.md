@@ -92,9 +92,13 @@ The format follows [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/
 - Restricted-page detection for quick-add no longer depends on a maintained
   host denylist. Protected URL schemes (`chrome:`, `chrome-extension:`, …)
   remain a fast path; otherwise the popup pings the content script on the
-  active tab and treats a missing receiver as “cannot whitelist.” A short
+  active tab and treats a missing receiver as "cannot whitelist." A short
   timeout fails open so a still-loading ordinary page is not marked
   restricted. Existing whitelist rows are never deleted by this check.
+- Store and website screenshots now show the v1.8.0 update-notes UI: the popup
+  footer line (`v1.8.0 · …`), `Settings → Updates`, and the options footer
+  `Release notes` link. `npm run store:screenshots` simulates an upgrade so a
+  fresh capture profile still shows the notify-release footer.
 
 #### Fixed
 - The popup no longer offers to whitelist a page the browser protects. Chrome

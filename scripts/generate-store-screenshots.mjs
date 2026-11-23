@@ -6,6 +6,11 @@
  * Chrome for Testing is recommended because recent branded Chrome builds no
  * longer load unpacked extensions from command-line flags. Set CHROME_PATH to
  * use another compatible Chromium build.
+ *
+ * Popup captures simulate an upgrade so the update-notes footer is visible:
+ * a fresh install seeds `dismissedUpdateNotice` with the running version in
+ * background.js, which would hide the line. Store shots set that key to a
+ * prior version and leave `updateNoticeEnabled` on.
  */
 
 import { spawn } from "node:child_process"
@@ -38,6 +43,16 @@ const domains = [
     "wikipedia.org",
     "stackoverflow.com",
 ]
+
+/**
+ * Storage that makes the popup update-note eligible. Fresh installs seed
+ * `dismissedUpdateNotice` with the installed version, so a blank profile never
+ * shows the footer line. Pretend the user upgraded from a prior silent build.
+ */
+const upgradeNoticeStorage = {
+    updateNoticeEnabled: true,
+    dismissedUpdateNotice: "1.7.5",
+}
 
 class CdpConnection {
     constructor(url) {
@@ -176,6 +191,45 @@ async function waitForPage(page, selector) {
     throw new Error(`Page did not render ${selector}`)
 }
 
+async function waitForCurrentDomain(page, expected) {
+    for (let attempt = 0; attempt < 100; attempt += 1) {
+        const value = await evaluate(
+            page,
+            `document.getElementById("currentDomainValue")?.textContent?.trim() || ""`
+        )
+        if (value === expected) {
+            return
+        }
+        await sleep(100)
+    }
+    throw new Error(`Current domain did not become ${expected}`)
+}
+
+/**
+ * Confirm the notify-release footer is showing after the upgrade storage is
+ * applied. Fail loudly if a capture would silently omit the whole feature.
+ */
+async function waitForVisibleUpdateNote(page) {
+    for (let attempt = 0; attempt < 100; attempt += 1) {
+        const text = await evaluate(
+            page,
+            `(() => {
+                const note = document.getElementById("updateNote");
+                if (!note || note.hidden) return "";
+                return document.getElementById("updateNoteText")?.textContent || "";
+            })()`
+        )
+        if (typeof text === "string" && text.includes("v") && text.includes("·")) {
+            console.log(`update note visible: ${text}`)
+            return text
+        }
+        await sleep(100)
+    }
+    throw new Error(
+        "Update note footer did not appear — check upgradeNoticeStorage and update-notices.js"
+    )
+}
+
 async function applyCaptureFrame(page, kind, theme) {
     const frameStyle =
         kind === "popup"
@@ -195,7 +249,9 @@ async function applyCaptureFrame(page, kind, theme) {
                 document.body.style.colorScheme = ${JSON.stringify(theme)};
                 document.documentElement.style.backgroundColor =
                     "color-mix(in srgb, var(--bg-primary) 92%, var(--bg-secondary))";
-                document.body.style.zoom = "0.82";
+                // 0.72 keeps Settings → Updates and the footer Release notes
+                // link in the 1280×800 frame after the Updates section landed.
+                document.body.style.zoom = "0.72";
                 document.body.style.margin = "0 auto";
             `
     await evaluate(
@@ -301,20 +357,21 @@ async function main() {
         const browser = new CdpConnection(version.webSocketDebuggerUrl)
         await browser.command("Target.setDiscoverTargets", { discover: true })
 
-        const background = await waitForTarget(
+        // Prefer the welcome tab opened on INSTALL — recent Chromium also ships
+        // component extensions with `background.js`, and picking the first SW
+        // can resolve to Gemini (or similar) instead of the unpacked load.
+        // Fall back to any SW that is not a chrome:// component by matching the
+        // welcome / popup path once the install listener has run.
+        const welcome = await waitForTarget(
             port,
             (target) =>
-                target.type === "service_worker" &&
-                target.url.endsWith("/background.js")
+                target.type === "page" &&
+                target.url.startsWith("chrome-extension://") &&
+                target.url.endsWith("/welcome.html")
         )
-        console.log(`loaded ${background.url}`)
+        console.log(`loaded ${welcome.url}`)
 
-        // The extension id is the host of the service worker URL
-        // (`chrome-extension://<id>/background.js`). Never evaluate
-        // `chrome.runtime.*` inside that worker: on some Chromium builds (Edge)
-        // `chrome.runtime` is undefined there and the script dies on a TypeError
-        // before capturing anything.
-        const extensionId = new URL(background.url).host
+        const extensionId = new URL(welcome.url).host
         const manifestName = readManifestName()
         console.log(`extension ${extensionId}: ${manifestName}`)
 
@@ -322,12 +379,38 @@ async function main() {
             throw new Error(`Unexpected extension name: ${manifestName}`)
         }
 
+        const background = (await getTargets(port)).find(
+            (target) =>
+                target.type === "service_worker" &&
+                target.url ===
+                    `chrome-extension://${extensionId}/background.js`
+        )
+        if (background) {
+            console.log(`service worker ${background.url}`)
+        }
+
         const activeSite = await createTarget(
             browser,
             port,
             "https://news.ycombinator.com/"
         )
+        await browser.command("Target.activateTarget", {
+            targetId: activeSite.id,
+        })
         await sleep(800)
+
+        // Close the install welcome tab so the popup's activeTab query cannot
+        // land on chrome-extension://… and mark the domain Unavailable.
+        for (const target of await getTargets(port)) {
+            if (
+                target.type === "page" &&
+                target.url.endsWith("/welcome.html")
+            ) {
+                await browser.command("Target.closeTarget", {
+                    targetId: target.id,
+                })
+            }
+        }
 
         const popupStates = [
             {
@@ -364,16 +447,33 @@ async function main() {
         )
         pages.push(popup)
         for (const state of popupStates) {
+            await browser.command("Target.activateTarget", {
+                targetId: activeSite.id,
+            })
             await loadPageState(popup, {
                 userWhitelist: state.whitelist,
                 userTheme: state.theme,
                 userLanguage: state.language,
                 openInBackground: false,
+                ...upgradeNoticeStorage,
             })
             await browser.command("Target.activateTarget", {
                 targetId: activeSite.id,
             })
             await waitForPage(popup, "#currentDomainValue")
+            // Popup reads the active tab once on load. If Chromium still had
+            // the welcome page focused across the reload, nudge once more.
+            try {
+                await waitForCurrentDomain(popup, "news.ycombinator.com")
+            } catch {
+                await browser.command("Target.activateTarget", {
+                    targetId: activeSite.id,
+                })
+                await popup.command("Page.reload", { ignoreCache: true })
+                await waitForPage(popup, "#currentDomainValue")
+                await waitForCurrentDomain(popup, "news.ycombinator.com")
+            }
+            await waitForVisibleUpdateNote(popup)
             await sleep(300)
             await applyCaptureFrame(popup, "popup", state.theme)
             await capture(popup, state.filename)
@@ -403,16 +503,16 @@ async function main() {
         )
         pages.push(options)
         for (const state of optionStates) {
-            await loadPageState(
-                options,
-                {
-                    userWhitelist: domains,
-                    userTheme: state.theme,
-                    userLanguage: state.language,
-                    openInBackground: true,
-                }
-            )
+            await loadPageState(options, {
+                userWhitelist: domains,
+                userTheme: state.theme,
+                userLanguage: state.language,
+                openInBackground: true,
+                ...upgradeNoticeStorage,
+            })
             await waitForPage(options, "#domainsList")
+            await waitForPage(options, "#updateNoticeToggle")
+            await waitForPage(options, "#releaseNotesLink")
             await applyCaptureFrame(options, "options", state.theme)
             await capture(options, state.filename)
         }

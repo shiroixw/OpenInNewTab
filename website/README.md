@@ -47,8 +47,10 @@ website/
 The same window (`x: 210–1070, y: 0–800` out of the 1280×800 originals) keeps the popup and
 the settings page centred on identical canvases, so the three cards stay in visual register
 regardless of how wide the real UI is. Re-run `npm run store:screenshots` after a UI change,
-then re-crop. They are committed rather than generated at build time so deployment stays
-dependency-free.
+then re-crop (see the one-liner in [`store/README.md`](../store/README.md)). They are
+committed rather than generated at build time so deployment stays dependency-free. The
+gallery includes the update-notes footer and the Settings → Updates / Release notes UI
+from extension 1.8.0.
 
 ## SEO & Social Previews
 
