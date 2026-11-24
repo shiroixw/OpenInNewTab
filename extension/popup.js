@@ -34,12 +34,20 @@
     let currentDomain = ""
 
     /**
-     * Whether the content script cannot run on the active tab (protected
-     * scheme, or a live probe with no receiving end). No whitelist entry can
-     * make the extension run there, so the popup explains the limit instead of
-     * storing a domain that would never take effect.
+     * Whether the content script can never run on the active tab (protected
+     * scheme, or a hidden URL with no receiving content script). No whitelist
+     * entry can make the extension run there, so the popup explains the limit
+     * instead of storing a domain that would never take effect.
      */
     let currentPageRestricted = false
+
+    /**
+     * Whether the content script is simply not injected in the active tab yet
+     * (probe found no receiver on an ordinary page — usually a tab opened
+     * before the extension was installed or updated). Quick-add stays
+     * available; the popup only hints that a refresh activates the entry.
+     */
+    let currentPageProbeMissing = false
 
     /** How long to wait for the content-script ping before failing open. */
     const CONTENT_SCRIPT_PROBE_TIMEOUT_MS = 200
@@ -367,8 +375,9 @@
 
     /**
      * Resolve the active tab's host and whether quick-add should be blocked
-     * because the content script cannot run there.
-     * @returns {Promise<{ domain: string, restricted: boolean }>}
+     * because the content script can never run there, plus whether the content
+     * script is merely not injected in this tab yet.
+     * @returns {Promise<{ domain: string, restricted: boolean, probeMissing: boolean }>}
      */
     async function getActiveTabTarget() {
         try {
@@ -377,7 +386,7 @@
                 currentWindow: true,
             })
             if (!tab) {
-                return { domain: "", restricted: false }
+                return { domain: "", restricted: false, probeMissing: false }
             }
 
             // `tab.url` is often omitted for chrome:// pages unless the user
@@ -400,27 +409,27 @@
 
             // Protected schemes never get a content script — skip the ping.
             if (tabUrl && isRestrictedUrl(tabUrl)) {
-                return { domain, restricted: true }
+                return { domain, restricted: true, probeMissing: false }
             }
 
             // No tab id (rare) or a probe that times out: fail open.
             if (typeof tab.id !== "number") {
-                return { domain, restricted: false }
+                return { domain, restricted: false, probeMissing: false }
             }
 
             const probe = await probeContentScript(tab.id)
+            const input = { url: tabUrl || null, probe }
+            const restricted = isPageRestrictedForQuickAdd(input)
             return {
                 domain,
-                restricted: isPageRestrictedForQuickAdd({
-                    url: tabUrl || null,
-                    probe,
-                }),
+                restricted,
+                probeMissing: !restricted && probe === "missing",
             }
         } catch (error) {
             // A URL we cannot parse tells us nothing about protection; leaving
             // the flag off keeps the popup usable rather than silently inert.
             console.error("Error getting current tab:", error)
-            return { domain: "", restricted: false }
+            return { domain: "", restricted: false, probeMissing: false }
         }
     }
 
@@ -478,6 +487,13 @@
             quickAddBtnText.textContent = getText("quickAddBtnText")
             quickAddBtn.title = getText("quickAddBtnAddTitle")
         }
+
+        // Quick-add stays usable; only explain that this tab needs a refresh
+        // before the entry takes effect here.
+        if (currentPageProbeMissing) {
+            hint.textContent = getText("pendingReloadHint")
+            hint.hidden = false
+        }
     }
 
     /**
@@ -500,6 +516,12 @@
         quickAddBtn.title = removing
             ? getText("quickAddBtnRemoveTitle")
             : getText("quickAddBtnAddTitle")
+
+        if (currentPageProbeMissing) {
+            const hint = document.getElementById("restrictedHint")
+            hint.textContent = getText("pendingReloadHint")
+            hint.hidden = false
+        }
     }
 
     /**
@@ -880,11 +902,13 @@
      */
     async function initialize() {
         try {
-            // Resolve the active tab once: the host labels the card, and the
-            // protection flag decides whether quick-add is offered at all.
+            // Resolve the active tab once: the host labels the card, the
+            // protection flag decides whether quick-add is offered at all,
+            // and the probe gap drives the refresh hint.
             const target = await getActiveTabTarget()
             currentDomain = target.domain
             currentPageRestricted = target.restricted
+            currentPageProbeMissing = target.probeMissing
             document.getElementById("currentDomainValue").textContent =
                 currentDomain || "N/A"
 

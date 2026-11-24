@@ -177,10 +177,18 @@ export function classifyContentScriptProbe(outcome = {}) {
 }
 
 /**
- * Whether quick-add should be disabled for the active tab.
+ * Whether quick-add must be disabled for the active tab.
  *
- * Scheme checks short-circuit; otherwise only a definitive "content script
- * missing" probe blocks. Uncertainty fails open.
+ * Only a protected scheme disables quick-add. A "missing" probe on an
+ * ordinary page does not: it just means the content script is not injected in
+ * *this* tab right now — typically a tab that was open before the extension
+ * was installed or updated. The whitelist entry applies on the next page load,
+ * so quick-add stays available and the popup offers a refresh hint instead of
+ * declaring the page unusable.
+ *
+ * The one exception is a hidden URL with a missing probe: the scheme cannot be
+ * checked and such tabs (usually chrome://) can never run the content script.
+ * Uncertainty otherwise fails open.
  *
  * @param {{ url?: string|URL|null, probe?: "alive"|"missing"|"uncertain" }} [input]
  * @returns {boolean}
@@ -190,7 +198,7 @@ export function isPageRestrictedForQuickAdd(input = {}) {
     if (isRestrictedUrl(url)) {
         return true
     }
-    return probe === "missing"
+    return !url && probe === "missing"
 }
 
 /**

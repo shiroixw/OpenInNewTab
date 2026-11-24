@@ -138,14 +138,22 @@ describe("isPageRestrictedForQuickAdd", () => {
         )
     })
 
-    it("blocks when the content script is missing on an ordinary https page", () => {
-        assert.equal(
-            isPageRestrictedForQuickAdd({
-                url: "https://chromewebstore.google.com/detail/abc",
-                probe: "missing",
-            }),
-            true
-        )
+    it("does not block when the content script is missing on an ordinary https page", () => {
+        // A missing receiver only means the content script is not injected in
+        // *this* tab right now (typically opened before install/update). The
+        // whitelist entry applies on the next load, so quick-add must stay
+        // available and the popup shows a refresh hint instead of blocking.
+        for (const url of [
+            "https://git.woa.com/xiaowuruan/OpenInNewTab",
+            "https://chromewebstore.google.com/detail/abc",
+            "https://example.com/",
+        ]) {
+            assert.equal(
+                isPageRestrictedForQuickAdd({ url, probe: "missing" }),
+                false,
+                `expected quick-add to stay available: ${url}`
+            )
+        }
     })
 
     it("leaves ordinary sites alone when the content script is alive", () => {

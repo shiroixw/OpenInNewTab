@@ -6,6 +6,7 @@
     "quickAddBtnAddTitle": "将当前域名添加到白名单",
     "quickAddUnavailable": "不可用",
     "restrictedPageHint": "扩展无法在此页面运行，加入白名单不会生效。",
+    "pendingReloadHint": "当前标签页未运行扩展，加入白名单后刷新页面即可生效。",
     "quickAddBtnRemoveTitle": "将当前域名从白名单移除",
     "whitelistTitle": "白名单",
     "removeButton": "移除",
