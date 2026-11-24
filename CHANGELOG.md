@@ -88,35 +88,7 @@ The format follows [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/
 
 ### [Unreleased]
 
-#### Fixed
-- Whitelist import now accepts all JSON formats this project exports: bare
-  arrays, extension format (`{ whitelist: [...] }`), userscript format
-  (`{ domains: [...] }`), and legacy storage-key format
-  (`{ userWhitelist: [...] }`). Previously the extension only accepted its own
-  format, so a JSON file exported from the userscript could not be imported
-  into the extension. The shared `extractDomainsFromPayload` helper makes the
-  parsing logic consistent and testable.
-
-#### Changed
-- Restricted-page detection for quick-add no longer depends on a maintained
-  host denylist. Protected URL schemes (`chrome:`, `chrome-extension:`, …)
-  remain a fast path; otherwise the popup pings the content script on the
-  active tab and treats a missing receiver as "cannot whitelist." A short
-  timeout fails open so a still-loading ordinary page is not marked
-  restricted. Existing whitelist rows are never deleted by this check.
-- Store and website screenshots now show the v1.8.0 update-notes UI: the popup
-  footer line (`v1.8.0 · …`), `Settings → Updates`, and the options footer
-  `Release notes` link. `npm run store:screenshots` simulates an upgrade so a
-  fresh capture profile still shows the notify-release footer.
-
-#### Fixed
-- The popup no longer offers to whitelist a page the browser protects. Chrome
-  never injects content scripts on pages it owns end to end (Web Store,
-  `chrome://` internals, other extensions' pages, and similar), so such an
-  entry could never take effect. Quick-add is disabled there and the reason is
-  shown inline. Reported against the Web Store developer console.
-
-### [1.8.0] — 2026-10-25
+### [1.8.0] — 2026-11-24
 
 #### Added
 - **Update notes in the popup.** A release that changes how the extension
@@ -135,6 +107,32 @@ The format follows [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/
   release workflow — fails the build when the version being packaged has no
   entry, when its copy is incomplete in any of the three shipped locales, or
   when `CHANGELOG.md` does not document it.
+
+#### Changed
+- Restricted-page detection for quick-add no longer depends on a maintained
+  host denylist. Protected URL schemes (`chrome:`, `chrome-extension:`, …)
+  remain a fast path; otherwise the popup pings the content script on the
+  active tab and treats a missing receiver as "cannot whitelist." A short
+  timeout fails open so a still-loading ordinary page is not marked
+  restricted. Existing whitelist rows are never deleted by this check.
+- Store and website screenshots now show the v1.8.0 update-notes UI: the popup
+  footer line (`v1.8.0 · …`), `Settings → Updates`, and the options footer
+  `Release notes` link. `npm run store:screenshots` simulates an upgrade so a
+  fresh capture profile still shows the notify-release footer.
+
+#### Fixed
+- Whitelist import now accepts all JSON formats this project exports: bare
+  arrays, extension format (`{ whitelist: [...] }`), userscript format
+  (`{ domains: [...] }`), and legacy storage-key format
+  (`{ userWhitelist: [...] }`). Previously the extension only accepted its own
+  format, so a JSON file exported from the userscript could not be imported
+  into the extension. The shared `extractDomainsFromPayload` helper makes the
+  parsing logic consistent and testable.
+- The popup no longer offers to whitelist a page the browser protects. Chrome
+  never injects content scripts on pages it owns end to end (Web Store,
+  `chrome://` internals, other extensions' pages, and similar), so such an
+  entry could never take effect. Quick-add is disabled there and the reason is
+  shown inline. Reported against the Web Store developer console.
 
 ### [1.7.5] — 2026-10-24
 
