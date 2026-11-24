@@ -285,6 +285,36 @@ export function mergeWhitelist(domains, incoming) {
 }
 
 /**
+ * Extract the domain array from an imported payload, accepting all formats
+ * this project exports or has exported:
+ *   - Bare array: `[...]`
+ *   - Extension format: `{ whitelist: [...] }`
+ *   - Userscript format: `{ domains: [...] }`
+ *   - Legacy storage-key format: `{ userWhitelist: [...] }`
+ *
+ * Returns `[]` when no recognizable shape is found.
+ * @param {unknown} parsed
+ * @returns {unknown[]}
+ */
+export function extractDomainsFromPayload(parsed) {
+    if (Array.isArray(parsed)) {
+        return parsed
+    }
+    if (parsed && typeof parsed === "object") {
+        if (Array.isArray(/** @type {{ whitelist?: unknown }} */ (parsed).whitelist)) {
+            return /** @type {{ whitelist: unknown[] }} */ (parsed).whitelist
+        }
+        if (Array.isArray(/** @type {{ domains?: unknown }} */ (parsed).domains)) {
+            return /** @type {{ domains: unknown[] }} */ (parsed).domains
+        }
+        if (Array.isArray(/** @type {{ userWhitelist?: unknown }} */ (parsed).userWhitelist)) {
+            return /** @type {{ userWhitelist: unknown[] }} */ (parsed).userWhitelist
+        }
+    }
+    return []
+}
+
+/**
  * Drop every entry covering `hostname` — used by the popup's "remove current
  * domain" action, which must also undo a parent entry that covers this host.
  * @param {unknown} whitelist

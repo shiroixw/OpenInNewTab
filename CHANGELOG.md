@@ -88,6 +88,15 @@ The format follows [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/
 
 ### [Unreleased]
 
+#### Fixed
+- Whitelist import now accepts all JSON formats this project exports: bare
+  arrays, extension format (`{ whitelist: [...] }`), userscript format
+  (`{ domains: [...] }`), and legacy storage-key format
+  (`{ userWhitelist: [...] }`). Previously the extension only accepted its own
+  format, so a JSON file exported from the userscript could not be imported
+  into the extension. The shared `extractDomainsFromPayload` helper makes the
+  parsing logic consistent and testable.
+
 #### Changed
 - Restricted-page detection for quick-add no longer depends on a maintained
   host denylist. Protected URL schemes (`chrome:`, `chrome-extension:`, …)

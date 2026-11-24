@@ -3,6 +3,7 @@ import { describe, it } from "node:test"
 import {
     CONTENT_SCRIPT_PING,
     classifyContentScriptProbe,
+    extractDomainsFromPayload,
     findCoveringDomain,
     isHostAllowed,
     isPageRestrictedForQuickAdd,
@@ -372,5 +373,124 @@ describe("removeHostFromWhitelist", () => {
         )
         assert.deepEqual(removed, [])
         assert.deepEqual(domains, ["example.com"])
+    })
+})
+
+describe("extractDomainsFromPayload", () => {
+    it("returns the array when the payload is a bare array", () => {
+        assert.deepEqual(
+            extractDomainsFromPayload(["github.com", "example.com"]),
+            ["github.com", "example.com"]
+        )
+        assert.deepEqual(extractDomainsFromPayload([]), [])
+    })
+
+    it("extracts from extension format { whitelist: [...] }", () => {
+        const payload = {
+            version: "1.8.0",
+            exportDate: "2026-11-24T00:00:00.000Z",
+            whitelist: ["github.com", "example.com"],
+        }
+        assert.deepEqual(
+            extractDomainsFromPayload(payload),
+            ["github.com", "example.com"]
+        )
+    })
+
+    it("extracts from userscript format { domains: [...] }", () => {
+        const payload = {
+            version: 1,
+            exportedAt: "2026-11-24T00:00:00.000Z",
+            domains: ["github.com", "example.com"],
+        }
+        assert.deepEqual(
+            extractDomainsFromPayload(payload),
+            ["github.com", "example.com"]
+        )
+    })
+
+    it("extracts from legacy storage-key format { userWhitelist: [...] }", () => {
+        const payload = { userWhitelist: ["github.com", "example.com"] }
+        assert.deepEqual(
+            extractDomainsFromPayload(payload),
+            ["github.com", "example.com"]
+        )
+    })
+
+    it("prefers whitelist over domains over userWhitelist when multiple exist", () => {
+        assert.deepEqual(
+            extractDomainsFromPayload({
+                whitelist: ["w.com"],
+                domains: ["d.com"],
+                userWhitelist: ["u.com"],
+            }),
+            ["w.com"]
+        )
+        assert.deepEqual(
+            extractDomainsFromPayload({
+                domains: ["d.com"],
+                userWhitelist: ["u.com"],
+            }),
+            ["d.com"]
+        )
+    })
+
+    it("returns [] for null, undefined, non-object, or missing keys", () => {
+        assert.deepEqual(extractDomainsFromPayload(null), [])
+        assert.deepEqual(extractDomainsFromPayload(undefined), [])
+        assert.deepEqual(extractDomainsFromPayload("string"), [])
+        assert.deepEqual(extractDomainsFromPayload(42), [])
+        assert.deepEqual(extractDomainsFromPayload({}), [])
+        assert.deepEqual(extractDomainsFromPayload({ other: ["x.com"] }), [])
+    })
+
+    it("returns [] when whitelist/domains/userWhitelist is not an array", () => {
+        assert.deepEqual(extractDomainsFromPayload({ whitelist: "github.com" }), [])
+        assert.deepEqual(extractDomainsFromPayload({ domains: { 0: "x.com" } }), [])
+        assert.deepEqual(extractDomainsFromPayload({ userWhitelist: null }), [])
+    })
+})
+
+describe("extractDomainsFromPayload round-trip", () => {
+    it("userscript export → extension import works", () => {
+        const userscriptExport = {
+            version: 1,
+            exportedAt: new Date().toISOString(),
+            domains: ["github.com", "example.com"],
+        }
+        const extracted = extractDomainsFromPayload(userscriptExport)
+        const { domains, added } = mergeWhitelist([], extracted)
+        assert.deepEqual(domains, ["github.com", "example.com"])
+        assert.equal(added, 2)
+    })
+
+    it("extension export → extension import works", () => {
+        const extensionExport = {
+            version: "1.8.0",
+            exportDate: new Date().toISOString(),
+            whitelist: ["github.com", "example.com"],
+        }
+        const extracted = extractDomainsFromPayload(extensionExport)
+        const { domains, added } = mergeWhitelist([], extracted)
+        assert.deepEqual(domains, ["github.com", "example.com"])
+        assert.equal(added, 2)
+    })
+
+    it("import merges and deduplicates correctly", () => {
+        const userscriptExport = {
+            version: 1,
+            exportedAt: new Date().toISOString(),
+            domains: ["https://GitHub.com/x", "example.com", "bad host"],
+        }
+        const existing = ["example.com"]
+        const extracted = extractDomainsFromPayload(userscriptExport)
+        const { domains, added, duplicate, invalid } = mergeWhitelist(
+            existing,
+            extracted
+        )
+        assert.deepEqual(domains, ["example.com", "github.com"])
+        assert.equal(added, 1)
+        assert.equal(duplicate, 1)
+        assert.equal(invalid, 1)
     })
 })

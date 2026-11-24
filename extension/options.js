@@ -518,16 +518,12 @@
      */
     async function importWhitelist(file) {
         try {
-            const { mergeWhitelist } = await getPolicy()
+            const { extractDomainsFromPayload, mergeWhitelist } = await getPolicy()
             const text = await file.text()
             const data = JSON.parse(text)
-            const incoming = Array.isArray(data?.whitelist)
-                ? data.whitelist
-                : Array.isArray(data)
-                  ? data
-                  : null
+            const incoming = extractDomainsFromPayload(data)
 
-            if (!incoming || incoming.length === 0) {
+            if (incoming.length === 0) {
                 showNotification(getText("importError"))
                 return
             }
