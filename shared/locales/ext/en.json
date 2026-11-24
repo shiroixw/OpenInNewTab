@@ -6,6 +6,7 @@
     "quickAddBtnAddTitle": "Add current domain to whitelist",
     "quickAddUnavailable": "Unavailable",
     "restrictedPageHint": "The extension cannot run on this page, so adding it to the whitelist would have no effect.",
+    "pendingReloadHint": "The extension is not loaded in this tab yet. After adding, refresh the page to activate it.",
     "quickAddBtnRemoveTitle": "Remove current domain from whitelist",
     "whitelistTitle": "Whitelist",
     "removeButton": "Remove",

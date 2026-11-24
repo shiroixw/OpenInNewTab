@@ -88,6 +88,14 @@ The format follows [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/
 
 ### [Unreleased]
 
+#### Fixed
+- Quick-add is no longer marked "Unavailable" on ordinary pages whose content
+  script is not injected in the current tab (typically a tab opened before the
+  extension was installed or updated). A missing probe receiver only means the
+  entry takes effect after a refresh, which the popup now hints below the
+  button; only protected schemes (`chrome:`, `chrome-extension:`, …) keep the
+  disabled state.
+
 ### [1.8.0] — 2026-11-24
 
 #### Added

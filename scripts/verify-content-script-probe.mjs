@@ -372,9 +372,13 @@ async function main() {
                 expectRestricted: true,
             },
             {
+                // The store blocks content scripts, but quick-add stays open
+                // like on any stale tab: only protected schemes disable the
+                // button, and a stored entry is harmless.
                 name: "chrome-web-store",
                 url: "https://chromewebstore.google.com/",
-                expectRestricted: true,
+                expectRestricted: false,
+                expectAdd: "chromewebstore.google.com",
                 optional: true,
             },
         ]

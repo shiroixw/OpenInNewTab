@@ -6,6 +6,7 @@
     "quickAddBtnAddTitle": "將目前網域加入白名單",
     "quickAddUnavailable": "無法使用",
     "restrictedPageHint": "擴充功能無法在此頁面執行，加入白名單不會生效。",
+    "pendingReloadHint": "目前分頁尚未載入擴充功能，加入白名單後重新整理頁面即可生效。",
     "quickAddBtnRemoveTitle": "將目前網域從白名單移除",
     "whitelistTitle": "白名單",
     "removeButton": "移除",
